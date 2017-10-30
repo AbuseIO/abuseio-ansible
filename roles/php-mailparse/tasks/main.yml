@@ -1,0 +1,13 @@
+---
+# tasks file for php-mailparse
+- name: Place PHP mailparse configuration file in place.
+  template:
+    src: mailparse.ini.j2
+    dest: "{{ item }}/conf.d/mailparse.ini"
+    owner: root
+    group: root
+    mode: 0644
+  with_items: "{{ php_conf_paths }}"
+  notify: restart webserver
+  when: php_use_managed_ini
+

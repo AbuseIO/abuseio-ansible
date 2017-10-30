@@ -1,0 +1,20 @@
+php_memory_limit: "512M"
+php_max_execution_time: "60"
+php_upload_max_filesize: "256M"
+php_packages:
+  - php
+  - php-cli
+  - php-common
+  - php-dev
+  - php-gd
+  - php-mbstring
+  - php-pdo
+  - php-xml
+  - php-pear
+  - php-mcrypt
+  - php-mysql
+  - php-curl
+  - php-intl
+  - php-bcmath
+  - php-zip
+  - php-apcu

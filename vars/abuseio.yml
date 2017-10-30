@@ -1,0 +1,11 @@
+abuseio_basedir: "/opt/abuseio"
+#abuseio_hostname: "abuseio.isp.local"
+abuseio_hostname: "abuseio.bit.nl"
+abuseio_admin_contact: "admin@isp.local"
+abuseio_abuse_contact: "abuse@isp.local"
+
+abuseio_mysql_root_password: "changeme1"
+abuseio_mysql_database_name: "abuseio"
+abuseio_mysql_database_user: "abuseio_usr"
+abuseio_mysql_database_password: "changeme2"
+

@@ -1,0 +1,34 @@
+- name: AbuseIO base installation
+  gather_facts: yes
+  hosts: localhost
+  vars_files:
+    - vars/abuseio.yml
+    - vars/apache.yml
+    - vars/mysql.yml
+    - vars/php.yml
+    - vars/php-pecl.yml
+    - vars/composer.yml
+    - vars/phpmyadmin.yml
+
+  pre_tasks:
+  - name: install ansible required packages, like python 
+    raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+  - name: install ansible required packages, like python-netaddr
+    raw: python -c "import netaddr" || (apt -y update && apt install -y python-netaddr)
+  - name: install ansible required packages, like python-dnspython
+    raw: python -c "import dns.zone" || (apt -y update && apt install -y python-dnspython)
+
+  tasks:
+  - import_tasks: tests/preflight.yml
+    static: yes
+  roles:
+    - apache
+    - mysql
+    - php
+    - php-mysql
+    - composer
+    - php-mbstring-patch
+    - php-pecl
+    - php-mailparse
+    - phpmyadmin
+    - postfix
