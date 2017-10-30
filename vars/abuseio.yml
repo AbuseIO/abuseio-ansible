@@ -1,6 +1,5 @@
 abuseio_basedir: "/opt/abuseio"
-#abuseio_hostname: "abuseio.isp.local"
-abuseio_hostname: "abuseio.bit.nl"
+abuseio_hostname: "abuseio.isp.local"
 abuseio_admin_contact: "admin@isp.local"
 abuseio_abuse_contact: "abuse@isp.local"
 
