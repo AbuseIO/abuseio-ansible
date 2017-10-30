@@ -9,6 +9,7 @@
     - vars/php-pecl.yml
     - vars/composer.yml
     - vars/phpmyadmin.yml
+    - vars/certbot.yml
 
   pre_tasks:
   - name: install ansible required packages, like python 
@@ -32,3 +33,4 @@
     - php-mailparse
     - phpmyadmin
     - postfix
+    - certbot
