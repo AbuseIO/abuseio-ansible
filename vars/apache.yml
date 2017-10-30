@@ -12,3 +12,4 @@ apache_mods_enabled:
   - rewrite.load
   - ssl.load
   - php7.0.load
+  - headers.load
