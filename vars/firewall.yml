@@ -1,0 +1,13 @@
+firewall_state: started
+firewall_enabled_at_boot: true
+firewall_allowed_tcp_ports:
+  - "25"
+  - "80"
+  - "443"
+  - "587"
+
+firewall_additional_rules:
+  - "iptables -A INPUT -s {{ abuseio_trusted_v4_cidr }} -j ACCEPT"
+
+firewall_ip6_additional_rules:
+  - "ip6tables -A INPUT -s {{ abuseio_trusted_v6_cidr }} -j ACCEPT"

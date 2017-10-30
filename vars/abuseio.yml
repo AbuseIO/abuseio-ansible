@@ -9,3 +9,6 @@ abuseio_mysql_database_name: "abuseio"
 abuseio_mysql_database_user: "abuseio_usr"
 abuseio_mysql_database_password: "changeme2"
 
+abuseio_trusted_v4_cidr: "0.0.0.0/0"
+abuseio_trusted_v6_cidr: "::0/0"
+

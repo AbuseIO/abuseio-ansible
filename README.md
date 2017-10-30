@@ -29,3 +29,5 @@ and use --no-bootstrap to save time
 - create admin user
 - create cronjobs
 - setup local resolver
+- firewall add multiple trusted ranges
+- add fail2ban just in case
