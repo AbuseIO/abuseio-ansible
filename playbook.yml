@@ -21,7 +21,6 @@
 
   tasks:
   - import_tasks: tests/preflight.yml
-    static: yes
   roles:
     - apache
     - mysql
