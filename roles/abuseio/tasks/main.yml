@@ -1,7 +1,7 @@
 ---
 # tasks file for abuseio
-- name: Pulling AbuseIO Version XXX from Gitlab
+- name: Pulling AbuseIO Version {{ abuseio_version }} from Gitlab
   git:
     repo: 'https://github.com/AbuseIO/AbuseIO.git'
     dest: /opt/abuseio
-    version: 4.1-gui
+    version: "{{ abuseio_version }}"

@@ -1,3 +1,4 @@
+abuseio_version: "4.1-gui"
 abuseio_basedir: "/opt/abuseio"
 abuseio_hostname: "abuseio.isp.local"
 abuseio_admin_contact: "admin@isp.local"
