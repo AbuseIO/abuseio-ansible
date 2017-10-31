@@ -14,7 +14,7 @@
 
 # Setup/install tasks.
 - include_tasks: "setup-{{ ansible_os_family }}.yml"
-  static: yes
+  static: no
 
 # Figure out what version of Apache is installed.
 - name: Get installed version of Apache.
