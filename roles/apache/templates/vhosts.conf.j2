@@ -76,6 +76,12 @@
 {% if vhost.extra_parameters is defined %}
   {{ vhost.extra_parameters }}
 {% endif %}
+
+  Header always add Strict-Transport-Security "max-age=15552000; includeSubDomains"
+  Header always add X-Content-Type-Options "nosniff"
+  Header always add X-Frame-Options "SAMEORIGIN"
+  Header always add X-XSS-Protection "1; mode=block"
+
 </VirtualHost>
 
 {% endif %}
