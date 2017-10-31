@@ -70,7 +70,7 @@
   changed_when: composer_install_result.stderr | search('- \w+ing ')
 
 - name: Migrating DB
-  shell: chdir={{ ansistrano_deploy_to }}/{{ ansistrano_current_dir }}
+  shell: chdir={{ abuseio_basedir }}
     /usr/bin/php artisan migrate --force
   register: migrate_result
   changed_when: "migrate_result.stdout != 'Nothing to migrate.'"
