@@ -19,6 +19,8 @@ echo * values. Make sure your hostname is valid and has a A/AAAA record which is
 echo * bound to this machine. Once completed you can complete the install by running:
 echo * 
 echo * root@ubuntu:/opt/abuseio-ansible# ansible-playbook -i hosts playbook.yml
+echo *
+echo * PLEASE NOTE: The entire playbook can run over 15 minutes, so be patient!
 echo * 
 echo * Ran into problems? pastebin your entire output and submit an issue
 echo ***
