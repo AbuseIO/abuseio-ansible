@@ -18,9 +18,6 @@
     raw: python -c "import netaddr" || (apt -y update && apt install -y python-netaddr)
   - name: install ansible required packages, like python-dnspython
     raw: python -c "import dns.zone" || (apt -y update && apt install -y python-dnspython)
-
-  #move to pretasks when done
-  tasks:
   - name: run preflight checks
     import_tasks: tests/preflight.yml
 
