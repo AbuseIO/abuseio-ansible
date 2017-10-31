@@ -80,6 +80,11 @@
   shell: chdir={{ abuseio_basedir }}
     /usr/bin/php artisan cache:clear
 
+- name: List artisan commands
+  shell: chdir={{ abuseio_basedir }}
+    /usr/bin/php artisan
+  register: artisan_commands
+
 - name: Optimize code
   shell: chdir={{ abuseio_basedir }}
     /usr/bin/php artisan clear-compiled && /usr/bin/php artisan optimize
