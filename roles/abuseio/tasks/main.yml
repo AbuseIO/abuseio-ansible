@@ -64,11 +64,11 @@
     recurse: yes
 
 - name: Clear application cache
-  shell: chdir={{ abuseio_basedir.stdout }}
+  shell: chdir={{ abuseio_basedir }}
     /usr/bin/php artisan cache:clear
 
 - name: Run composer install
-  shell: chdir={{ abuseio_basedir.stdout }}
+  shell: chdir={{ abuseio_basedir }}
     /usr/bin/php /usr/local/bin/composer install
   register: composer_install_result
   changed_when: composer_install_result.stderr | search('- \w+ing ')
@@ -80,17 +80,17 @@
   changed_when: "migrate_result.stdout != 'Nothing to migrate.'"
 
 - name: Optimize code
-  shell: chdir={{ abuseio_basedir.stdout }}
+  shell: chdir={{ abuseio_basedir }}
     /usr/bin/php artisan clear-compiled && /usr/bin/php artisan optimize
   when: artisan_commands.stdout.find('optimize') != -1
 
 - name: Cache routes
-  shell: chdir={{ abuseio_basedir.stdout }}
+  shell: chdir={{ abuseio_basedir }}
     /usr/bin/php artisan route:cache
   when: artisan_commands.stdout.find('route:cache') != -1
   ignore_errors: yes
 
 - name: Restart queues
-  shell: chdir={{ abuseio_basedir.stdout }}
+  shell: chdir={{ abuseio_basedir }}
     /usr/bin/php  artisan queue:restart
 
