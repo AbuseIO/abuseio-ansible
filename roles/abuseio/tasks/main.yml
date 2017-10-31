@@ -5,6 +5,7 @@
     repo: 'https://github.com/AbuseIO/AbuseIO.git'
     dest: /opt/abuseio
     version: "{{ abuseio_version }}"
+    force: yes
 
 - name: Create abuseio group
   group:
