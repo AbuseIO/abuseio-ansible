@@ -5,3 +5,35 @@
     repo: 'https://github.com/AbuseIO/AbuseIO.git'
     dest: /opt/abuseio
     version: "{{ abuseio_version }}"
+
+- name: Create abuseio group
+  group:
+    name: abuseio
+    state: present
+
+- name: Create abuseio user
+  user:
+    name: abuseio
+    shell: /bin/bash
+    createhome: no
+    home: /opt/abuseio
+    groups: abuseio
+    append: yes
+
+- name: Adding existing user '{{ item }}' to group abuseio
+  user:
+    name: '{{ item }}'
+    groups: abuseio
+    append: yes
+  with_items:
+    - "www-data"
+    - "postfix"
+
+- name: Update permissions on abuseio installation
+  file:
+    path: '{{ abuseio_basedir }}'
+    state: directory
+    owner: abuseio
+    group: abuseio
+    recurse: yes
+
