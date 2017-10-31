@@ -113,3 +113,11 @@
     /usr/bin/php artisan role:assign --role admin --user {{ abuseio_admin_user }}
   when: artisan_commands.stdout.find('role:assign') != -1
 
+- name: Install cron
+  cron:
+    name: "abuseio"
+    minute: "*"
+    job: "/usr/bin/php {{ abuseio_basedir }}/artisan schedule:run >> /dev/null 2>&1"
+    user: abuseio
+    cronfile: abuseio
+

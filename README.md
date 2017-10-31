@@ -22,6 +22,5 @@ and use --no-bootstrap to save time
 - apache hardening
 - install systemd files
 - install logrotate
-- create cronjobs
 - setup local resolver
 - add fail2ban just in case
