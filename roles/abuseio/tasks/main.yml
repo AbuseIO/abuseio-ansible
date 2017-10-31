@@ -29,6 +29,7 @@
   with_items:
     - "www-data"
     - "postfix"
+  notify: restart apache
 
 - name: create ENV configuration.
   template:
