@@ -2,6 +2,7 @@ this playbook assume that you have:
 
 - A clean Ubuntu 16.04 installation
 - Networking with resolving, with IPv4 and IPv6 address
+- A hostname pointing to the same IPv4 and IPv6 address
 - Set the variables in vars/abuseio.yml
 - Didn't change anything else
 
@@ -19,15 +20,9 @@ and use --no-bootstrap to save time
 - postfix create alias + notifier mapping
 - postfix to use SSL cert
 - apache hardening
-- add local user
-- change mysql defaults
-- clone abuseio + composer installer
-- set permissions
 - install systemd files
 - install logrotate
-- create .env file
 - create admin user
 - create cronjobs
 - setup local resolver
-- firewall add multiple trusted ranges
 - add fail2ban just in case
