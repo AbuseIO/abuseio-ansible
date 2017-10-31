@@ -9,6 +9,15 @@
     force: "{{ overwrite_global_mycnf }}"
   notify: restart mysql
 
+- name: Copy disable_strict_mode.cnf override MySQL configuration.
+  template:
+    src: disable_strict_mode.cnf.j2
+    dest: "{{ mysql_config_include_dir }}/disable_strict_mode.cnf"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart mysql
+
 - name: Verify mysql include directory exists.
   file:
     path: "{{ mysql_config_include_dir }}"
