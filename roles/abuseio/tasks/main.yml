@@ -91,11 +91,11 @@
     /usr/bin/php artisan clear-compiled && /usr/bin/php artisan optimize
   when: artisan_commands.stdout.find('optimize') != -1
 
-- name: Cache routes
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan route:cache
-  when: artisan_commands.stdout.find('route:cache') != -1
-  ignore_errors: yes
+#- name: Cache routes
+#  shell: chdir={{ abuseio_basedir }}
+#    /usr/bin/php artisan route:cache
+#  when: artisan_commands.stdout.find('route:cache') != -1
+#  ignore_errors: yes
 
 - name: Restart queues
   shell: chdir={{ abuseio_basedir }}
