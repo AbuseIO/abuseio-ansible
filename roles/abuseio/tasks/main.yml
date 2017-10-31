@@ -29,11 +29,68 @@
     - "www-data"
     - "postfix"
 
-- name: Update permissions on abuseio installation
+- name: create ENV configuration.
+  template:
+    src: .env.j2
+    dest: "{{ abuseio_basedir }}/.env"
+    owner: abuseio
+    group: abuseio
+    mode: 0660
+
+- name: Update permissions on abuseio base installation
   file:
     path: '{{ abuseio_basedir }}'
     state: directory
     owner: abuseio
     group: abuseio
     recurse: yes
+
+- name: Update permissions on abuseio storage dir
+  file:
+    path: "{{ abuseio_basedir }}/storage"
+    state: directory
+    owner: abuseio
+    group: abuseio
+    mode: 0770
+    recurse: yes
+
+- name: Update permissions on abuseio cache dir
+  file:
+    path: "{{ abuseio_basedir }}/bootstrap/cache"
+    state: directory
+    owner: abuseio
+    group: abuseio
+    mode: 0770
+    recurse: yes
+
+- name: Clear application cache
+  shell: chdir={{ abuseio_basedir.stdout }}
+    /usr/bin/php artisan cache:clear
+
+- name: Run composer install
+  shell: chdir={{ abuseio_basedir.stdout }}
+    /usr/bin/php /usr/local/bin/composer install
+  register: composer_install_result
+  changed_when: composer_install_result.stderr | search('- \w+ing ')
+
+- name: Migrating DB
+  shell: chdir={{ ansistrano_deploy_to }}/{{ ansistrano_current_dir }}
+    /usr/bin/php artisan migrate --force
+  register: migrate_result
+  changed_when: "migrate_result.stdout != 'Nothing to migrate.'"
+
+- name: Optimize code
+  shell: chdir={{ abuseio_basedir.stdout }}
+    /usr/bin/php artisan clear-compiled && /usr/bin/php artisan optimize
+  when: artisan_commands.stdout.find('optimize') != -1
+
+- name: Cache routes
+  shell: chdir={{ abuseio_basedir.stdout }}
+    /usr/bin/php artisan route:cache
+  when: artisan_commands.stdout.find('route:cache') != -1
+  ignore_errors: yes
+
+- name: Restart queues
+  shell: chdir={{ abuseio_basedir.stdout }}
+    /usr/bin/php  artisan queue:restart
 
