@@ -63,10 +63,6 @@
     mode: 0770
     recurse: yes
 
-- name: Clear application cache
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan cache:clear
-
 - name: Run composer install
   shell: chdir={{ abuseio_basedir }}
     /usr/bin/php /usr/local/bin/composer install
@@ -78,6 +74,10 @@
     /usr/bin/php artisan migrate --force
   register: migrate_result
   changed_when: "migrate_result.stdout != 'Nothing to migrate.'"
+
+- name: Clear application cache
+  shell: chdir={{ abuseio_basedir }}
+    /usr/bin/php artisan cache:clear
 
 - name: Optimize code
   shell: chdir={{ abuseio_basedir }}
