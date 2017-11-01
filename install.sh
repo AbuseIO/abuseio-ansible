@@ -13,6 +13,7 @@ apt-add-repository -y ppa:ansible/ansible
 apt-get update
 apt-get install -y ansible git
 git clone https://github.com/AbuseIO/abuseio-ansible.git /opt/abuseio-ansible
+cd /opt/abuseio-ansible
 echo ***
 echo * edit the file /opt/abuseio-ansible/vars/abuseio.yml and take care of the 
 echo * values. Make sure your hostname is valid and has a A/AAAA record which is
