@@ -87,7 +87,6 @@ range would be a good idea. It allows you full access to the box. Only 80/443 wi
 # TODO:
 
 - set deps throughout roles
-- certbot remove --test-cert for production
 - postfix set FQDN
 - postfix create alias + notifier mapping
 - postfix to use SSL cert
