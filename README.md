@@ -17,6 +17,12 @@ Our playbook is based on the work of Jeff Geerling (geerlingguy) which saved me 
 The playbook basically does the entire installation manual for you. You should end up with a fully functional installation, but only
 if you have set the variables correctly. The installation can take over 30 minutes depending on the speed of the system specifications.
 
+If you run into problems, try the playbook again. In general it will not do any harm and the playbook should be able to be replayed as 
+many times as you want.
+
+After a *FULL* and *COMPLETE* run you will end up with not only a basic installation of AbuseIO, but also a fairly secured server with SSL,
+firewalling, etc. Idea's and additions are welcome!
+
 # Developers Note
 
 Please consider using test certifications if you do a lot of testing. Else you will hit rate limits @letsencrypt!
@@ -87,6 +93,7 @@ range would be a good idea. It allows you full access to the box. Only 80/443 wi
 # TODO:
 
 - set deps throughout roles
+- don't get cert again if its already present
 - postfix set FQDN
 - postfix create alias + notifier mapping
 - postfix to use SSL cert
