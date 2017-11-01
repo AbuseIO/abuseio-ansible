@@ -32,6 +32,7 @@ apache_mods_enabled:
   - ssl.load
   - php7.0.load
   - headers.load
+  - socache_shmcb.load
 
 apache_global_vhost_settings: |
   DirectoryIndex index.php index.html
@@ -42,4 +43,4 @@ apache_global_vhost_settings: |
   Header always add X-Content-Type-Options "nosniff"
   Header always add X-Frame-Options "SAMEORIGIN"
   Header always add X-XSS-Protection "1; mode=block"
-
+  SSLStaplingCache "shmcb:logs/stapling-cache(128000)"
