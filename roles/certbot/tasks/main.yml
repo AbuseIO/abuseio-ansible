@@ -9,3 +9,5 @@
 
 - import_tasks: renew-cron.yml
   when: certbot_auto_renew
+
+- import_tasks: generate-certificates.yml
