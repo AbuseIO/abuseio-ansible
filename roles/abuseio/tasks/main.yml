@@ -119,5 +119,5 @@
     minute: "*"
     job: "/usr/bin/php {{ abuseio_basedir }}/artisan schedule:run >> /dev/null 2>&1"
     user: abuseio
-    cronfile: abuseio
+    cron_file: abuseio
 

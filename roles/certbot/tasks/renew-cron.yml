@@ -6,4 +6,4 @@
     minute: "{{ certbot_auto_renew_minute }}"
     hour: "{{ certbot_auto_renew_hour }}"
     user: "{{ certbot_auto_renew_user }}"
-    cronfile: certbot
+    cron_file: certbot
