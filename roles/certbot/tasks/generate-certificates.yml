@@ -1,7 +1,7 @@
 ---
 - name: Generate certificates for {{ abuseio_hostname }}
   shell: chdir=/opt/certbot
-    /opt/certbot/certbot-auto certonly -n -q --test-cert --agree-tos -m {{ abuseio_admin_contact }} --standalone --domains {{ abuseio_hostname }}
+    /opt/certbot/certbot-auto certonly -n -q --agree-tos -m {{ abuseio_admin_contact }} --standalone --domains {{ abuseio_hostname }}
 
 - name: Check if certificate exists.
   stat:
