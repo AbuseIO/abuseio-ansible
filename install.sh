@@ -11,7 +11,7 @@ apt-get update
 apt-get install software-properties-common
 apt-add-repository -y ppa:ansible/ansible
 apt-get update
-apt-get install -y ansible git
+apt-get install -y ansible git python-netaddr python-dnspython
 git clone https://github.com/AbuseIO/abuseio-ansible.git /opt/abuseio-ansible
 cd /opt/abuseio-ansible
 echo ***
