@@ -12,10 +12,16 @@ this playbook assume that you have:
 
 Our playbook is based on the work of Jeff Geerling (geerlingguy) which saved me a LOT of time :)
 
-# Note
+# Users Note
 
 The playbook basically does the entire installation manual for you. You should end up with a fully functional installation, but only
 if you have set the variables correctly. The installation can take over 30 minutes depending on the speed of the system specifications.
+
+# Developers Note
+
+Please consider using test certifications if you do a lot of testing. Else you will hit rate limits @letsencrypt!
+
+This can be done by editting roles/certbot/tasks/generate-certificates.yml and adding the option --test-cert to the certbot command
 
 # Oneshot installation
 
