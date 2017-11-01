@@ -23,6 +23,7 @@
 
   roles:
     - firewall
+    - certbot
     - apache
     - mysql
     - php
@@ -35,4 +36,3 @@
     - abuseio
     - postfix
     - git
-    - certbot
