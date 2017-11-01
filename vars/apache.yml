@@ -22,7 +22,6 @@ apache_vhosts_ssl:
       SSLUseStapling          on
       SSLStaplingResponderTimeout 5
       SSLStaplingReturnResponderErrors off
-      SSLStaplingCache        "shmcb:logs/stapling-cache(128000)"
 
 apache_remove_default_vhost: true
 apache_ignore_missing_ssl_certificate: false
