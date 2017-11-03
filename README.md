@@ -84,3 +84,12 @@ The AbuseIO database and its user. The database with user will be created and co
 The playbook installs a firewall. You can leave these values if the whole internet is allowed to SSH to your server, however limiting to your admin
 range would be a good idea. It allows you full access to the box. Only 80/443 will then publicly be open.
 
+# TODO
+config/production/session.php
+
+    'domain' => {{ abuseio_hostname }},
+    'httponly' => true,
+    'secure' => true,
+
+add CSP-policy, based on hashes
+

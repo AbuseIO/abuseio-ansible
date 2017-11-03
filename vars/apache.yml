@@ -43,4 +43,5 @@ apache_global_vhost_settings: |
   Header always add X-Content-Type-Options "nosniff"
   Header always add X-Frame-Options "SAMEORIGIN"
   Header always add X-XSS-Protection "1; mode=block"
+  Header always add Content-Security-Policy "default-src 'none'; connect-src 'self'; font-src 'self'; img-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self';"
   SSLStaplingCache "shmcb:logs/stapling-cache(128000)"
