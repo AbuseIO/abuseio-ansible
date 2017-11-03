@@ -86,11 +86,6 @@ The playbook installs a firewall. You can leave these values if the whole intern
 range would be a good idea. It allows you full access to the box. Only 80/443 will then publicly be open.
 
 # TODO
-config/production/session.php
-
-    'domain' => {{ abuseio_hostname }},
-    'httponly' => true,
-    'secure' => true,
-
+* add htaccess onto phpmyadmin with trusted cidr
 * add CSP-policy, based on hashes
 
