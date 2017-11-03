@@ -9,6 +9,7 @@
 - include_tasks: "networking.yml"
 - include_tasks: "postfix.yml"
 - include_tasks: "ssh.yml"
+- include_tasks: "tools.yml"
 - include_tasks: "ubuntu.yml"
 
 

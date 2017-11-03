@@ -3,10 +3,9 @@
   apt: upgrade=dist
 
 - name: Configure {{ item }} - Install Package
-  package:
-    name: {{ item }}
-    state: present
+  action: apt pkg={{ item }} state-installed
   with_items:
+    - apt-transport-https
     - ntp
     - logwatch
 
