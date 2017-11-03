@@ -93,3 +93,8 @@ config/production/session.php
 
 add CSP-policy, based on hashes
 
+change SSH
+
+  Remove these key exchange algorithms: diffie-hellman-group14-sha1
+  Remove these MAC algorithms: umac-64-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-64@openssh.com, hmac-sha1
+  Remove these authentication methods: password
