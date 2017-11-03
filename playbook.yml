@@ -24,18 +24,18 @@
     import_tasks: tests/preflight.yml
 
   roles:
-    - firewall
-    - certbot
-    - apache
-    - mysql
-    - php
-    - php-mysql
-    - composer
-    - php-mbstring-patch
-    - php-pecl
-    - php-mailparse
-    - phpmyadmin
-    - abuseio
-    - postfix
-    - git
-    - pdns-recursor
+    - { role: firewall,             tags: 'firewall' }
+    - { role: certbot,              tags: 'certbot' }
+    - { role: apache,               tags: 'apache' }
+    - { role: mysql,                tags: 'mysql' }
+    - { role: php,                  tags: 'php' }
+    - { role: php-mysql,            tags: 'php-mysql' }
+    - { role: composer,             tags: 'composer' }
+    - { role: php-mbstring-patch,   tags: 'php-mbstring-patch' }
+    - { role: php-pecl,             tags: 'php-pecl' }
+    - { role: php-mailparse,        tags: 'php-mailparse' }
+    - { role: phpmyadmin,           tags: 'phpmyadmin' }
+    - { role: abuseio,              tags: 'abuseio' }
+    - { role: postfix,              tags: 'postfix' }
+    - { role: git,                  tags: 'git' }
+    - { role: pdns-recursor,        tags: 'pdns-recursor' }
