@@ -7,6 +7,7 @@ this playbook assume that you have:
 - A clean Ubuntu 16.04 installation
 - Networking with resolving, with IPv4 and IPv6 address
 - A hostname pointing to the same IPv4 and IPv6 address
+- You created a non-root user with SSH-keys
 - Set the variables in vars/abuseio.yml
 - Didn't change anything else
 
@@ -93,8 +94,3 @@ config/production/session.php
 
 add CSP-policy, based on hashes
 
-change SSH
-
-  Remove these key exchange algorithms: diffie-hellman-group14-sha1
-  Remove these MAC algorithms: umac-64-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-64@openssh.com, hmac-sha1
-  Remove these authentication methods: password

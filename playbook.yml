@@ -39,3 +39,5 @@
     - { role: postfix,              tags: 'postfix' }
     - { role: git,                  tags: 'git' }
     - { role: pdns-recursor,        tags: 'pdns-recursor' }
+    - { role: lockdown,             tags: 'lockdown' }
+

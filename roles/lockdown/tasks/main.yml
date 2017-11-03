@@ -1,0 +1,14 @@
+---
+# tasks file for lockdown
+- include_tasks: "accounts.yml"
+- include_tasks: "apache.yml"
+- include_tasks: "core_dumps.yml"
+- include_tasks: "kernel_modules.yml"
+- include_tasks: "limits.yml"
+- include_tasks: "login_defs.yml"
+- include_tasks: "networking.yml"
+- include_tasks: "postfix.yml"
+- include_tasks: "ssh.yml"
+- include_tasks: "ubuntu.yml"
+
+

@@ -1,0 +1,69 @@
+---
+# defaults file for lockdown
+os_desktop_enable: false
+os_env_extra_user_paths: []
+os_env_umask: '027'
+os_auth_pw_max_age: 60
+os_auth_pw_min_age: 7 # discourage password cycling
+os_auth_retries: 5
+os_auth_lockout_time: 600 # 10min
+os_auth_timeout: 60
+os_auth_allow_homeless: false
+os_auth_pam_passwdqc_enable: true
+os_auth_pam_passwdqc_options: 'min=disabled,disabled,16,12,8' # used in RHEL6
+os_auth_pam_pwquality_options: 'try_first_pass retry=3 type=' # used in RHEL7
+os_auth_root_ttys: [console, tty1, tty2, tty3, tty4, tty5, tty6]
+os_auth_uid_min: 1000
+os_auth_gid_min: 1000
+os_auth_sys_uid_min: 100
+os_auth_sys_uid_max: 999
+os_auth_sys_gid_min: 100
+os_auth_sys_gid_max: 999
+
+os_chfn_restrict: ''
+os_security_users_allow: []
+os_ignore_users: ['vagrant', 'kitchen']
+os_security_kernel_enable_module_loading: true
+os_security_kernel_enable_core_dump: false
+os_security_suid_sgid_enforce: true
+os_security_suid_sgid_blacklist: []
+os_security_suid_sgid_whitelist: []
+os_security_suid_sgid_remove_from_unknown: false
+
+os_security_packages_clean: true
+os_security_packages_list: ['xinetd','inetd','ypserv','telnet-server','rsh-server', 'prelink']
+
+os_security_init_prompt: true
+os_security_init_single: false
+
+hardening_sysctl:
+- { name: net.ipv4.ip_forward, value: 0 }
+- { name: net.ipv4.conf.all.send_redirects, value: 0 }
+- { name: net.ipv4.conf.default.send_redirects, value: 0 }
+- { name: net.ipv4.conf.all.accept_source_route, value: 0 }
+- { name: net.ipv4.conf.default.accept_source_route, value: 0 }
+- { name: net.ipv4.conf.all.accept_redirects, value: 0 }
+- { name: net.ipv4.conf.default.accept_redirects, value: 0 }
+- { name: net.ipv4.conf.all.secure_redirects, value: 0 }
+- { name: net.ipv4.conf.default.secure_redirects, value: 0 }
+- { name: net.ipv4.conf.all.log_martians, value: 1 }
+- { name: net.ipv4.conf.default.log_martians, value: 1 }
+- { name: net.ipv4.icmp_echo_ignore_broadcasts, value: 1 }
+- { name: net.ipv4.icmp_ignore_bogus_error_responses, value: 1 }
+- { name: net.ipv4.conf.all.rp_filter, value: 1 }
+- { name: net.ipv4.conf.default.rp_filter, value: 1 }
+- { name: net.ipv4.tcp_syncookies, value: 1 }
+- { name: net.ipv6.conf.all.accept_source_route, value: 0 }
+- { name: net.ipv6.conf.all.accept_ra, value: 0 }
+- { name: net.ipv6.conf.default.accept_ra, value: 0 }
+- { name: net.ipv6.conf.all.accept_redirects, value: 0 }
+- { name: net.ipv6.conf.default.accept_redirects, value: 0 }
+- { name: net.ipv6.conf.all.disable_ipv6, value: 1 }
+- { name: net.ipv6.conf.default.disable_ipv6, value: 1 }
+- { name: net.ipv6.conf.lo.disable_ipv6, value: 1 }
+
+remove_sysctl:
+- { name: net.bridge.bridge-nf-call-ip6tables }
+- { name: net.bridge.bridge-nf-call-iptables }
+- { name: net.bridge.bridge-nf-call-arptables }
+

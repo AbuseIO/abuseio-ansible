@@ -1,0 +1,34 @@
+---
+- name: Disable System Accounts
+  command: /usr/sbin/usermod -s /usr/sbin/nologin libuuid
+
+- name: Set Default umask for Users
+  lineinfile:
+    dest: '/etc/login.defs'
+    regexp: "UMASK"
+    line: "UMASK 077"
+    state: present
+
+- name: Set Lockout for Failed Password Attempts
+  lineinfile:
+    dest: '/etc/pam.d/login'
+    regexp: "pam_tally2.so"
+    line: "auth required pam_tally2.so onerr=fail audit silent deny=5 unlock_time=900"
+    state: present
+
+- name: Limit Password Reuse
+  lineinfile:
+    dest: "{{ pam_password_file }}"
+    regexp: "remember=5"
+    line: "password sufficient pam_unix.so remember=5"
+    state: present
+
+- name: create securetty
+  template:
+    src: 'securetty.j2'
+    dest: '/etc/securetty'
+    owner: 'root'
+    group: 'root'
+    mode: '0400'
+
+
