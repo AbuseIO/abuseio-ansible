@@ -1,0 +1,16 @@
+---
+- name: Add Lynis repository
+  apt_repository:
+    repo: deb https://packages.cisofy.com/community/lynis/deb/ xenial main
+    state: present
+    filename: 'lynis'
+
+- name: Add Lynis repository key
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: C80E383C3DE9F082E01391A0366C67DE91CA5D5F
+
+- name: Configure {{ item }} - Install Package
+  action: apt pkg={{ item }} state-installed
+  with_items:
+    - lynis
