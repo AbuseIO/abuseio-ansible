@@ -2,19 +2,13 @@
 - name: Upgrade APT to the latest packages
   apt: upgrade=dist
 
-
-
-- name: Configure ntp - Install Package
+- name: Configure {{ item }} - Install Package
   package:
-    name: ntp
+    name: {{ item }}
     state: present
-
-
-
-- name: Configure logwatch - Install Package
-  package:
-    name: logwatch
-    state: present
+  with_items:
+    - ntp
+    - logwatch
 
 - name: Configure logwatch - Email log summary daily
   lineinfile: dest=/etc/cron.daily/00logwatch
@@ -22,15 +16,11 @@
               line="/usr/sbin/logwatch --output mail --mailto {{ abuseio_admin_contact }} --detail high"
               state=present create=yes
 
-
-
 - name: Set Permissions on bootloader config
   file:
     path: "{{ grubcfg_location }}"
     state: file
     mode: og-rwx
-
-
 
 - name: Set Warning Banner for Standard Login Services
   template: src=common-motd.j2 dest={{ item }} backup=yes
@@ -39,4 +29,10 @@
     - /etc/motd
     - /etc/issue
     - /etc/issue.net
+
+# Shared memory
+- name: Secure tmpfs read only
+  mount: name=/dev/shm src=tmpfs fstype=tmpfs opts=rw,nosuid,nodev,noexec state=present
+  tags: tmpfs
+
 
