@@ -1,7 +1,4 @@
 ---
-- name: Disable System Accounts
-  command: /usr/sbin/usermod -s /usr/sbin/nologin libuuid
-
 - name: Set Default umask for Users
   lineinfile:
     dest: '/etc/login.defs'
