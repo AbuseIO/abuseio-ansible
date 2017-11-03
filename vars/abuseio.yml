@@ -1,11 +1,11 @@
 abuseio_version: "4.1-gui"
 abuseio_basedir: "/opt/abuseio"
-abuseio_hostname: "abuseio.ip6.nu"
+abuseio_hostname: "abuseio.isp.local"
 
-abuseio_admin_contact: "bart@vrancken.eu"
-abuseio_abuse_contact: "abuse@ip6.nu"
+abuseio_admin_contact: "admin@isp.local"
+abuseio_abuse_contact: "abuse@isp.local"
 
-abuseio_admin_user: "admin@ip6.nu"
+abuseio_admin_user: "admin@isp.local"
 abuseio_admin_password: "changemetoo"
 
 abuseio_mysql_root_password: "changeme1"
