@@ -10,6 +10,8 @@
     - vars/composer.yml
     - vars/phpmyadmin.yml
     - vars/certbot.yml
+    - vars/pdns-recursor.yml
+    - vars/postfix.yml
 
   pre_tasks:
   - name: install ansible required packages, like python 
@@ -22,6 +24,7 @@
     import_tasks: tests/preflight.yml
 
   roles:
+    - postfix
     - firewall
     - certbot
     - apache
@@ -36,3 +39,4 @@
     - abuseio
     - postfix
     - git
+    - pdns-recursor

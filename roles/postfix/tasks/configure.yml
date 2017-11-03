@@ -1,0 +1,45 @@
+---
+- name: Configure postfix main.cf
+  template:
+    src: "templates/main.cf.j2"
+    dest: /etc/postfix/main.cf
+  notify:
+    - reload postfix
+
+- name: Configure postfix master.cf
+  template:
+    src: "templates/master.cf.j2"
+    dest: /etc/postfix/master.cf
+  notify:
+    - reload postfix
+
+- name: Configure postfix /etc/mailname
+  copy:
+    dest: /etc/mailname
+    content: "{{ abuseio_hostname }}"
+  notify:
+    - reload postfix
+
+- name: Configure postfix /etc/postfix/transport
+  copy:
+    dest: /etc/postfix/transport
+    content: "notifier@isp.local notifier:"
+  notify:
+    - reload postmap
+
+- name: Configure postfix aliases
+  lineinfile:
+    dest: /etc/aliases
+    regexp: "^{{ item.user }}:"
+    line: "{{ item.user }}: {{ item.dest }}"
+  notify:
+    - newaliases
+  with_items:
+    - { user: "root", dest: "{{ abuseio_admin_contact }} " }
+    - { user: "notifier", dest: "notifier@{{ abuseio_hostname }}" }
+
+- name: ensure postfix is running
+  service: name=postfix state=started enabled=yes
+
+- name: always reload postfix
+  service: name=postfix state=reloaded

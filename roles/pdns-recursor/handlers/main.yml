@@ -1,0 +1,6 @@
+---
+
+- name: Restart PowerDNS Recursor
+  service:
+    name: "{{ pdns_rec_service_name }}"
+    state: restarted

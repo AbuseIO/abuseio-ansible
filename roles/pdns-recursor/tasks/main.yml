@@ -1,0 +1,56 @@
+---
+
+- name: Include OS-specific variables
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Setup the PowerDNS Recursor repo
+  include_tasks: "repo-{{ ansible_os_family }}.yml"
+  when: pdns_rec_install_repo != ""
+  tags:
+    - install
+    - repository
+
+- name: Generate the PowerDNS Recursor configuration 
+  include_tasks: configure.yml
+  tags:
+    - config
+
+- name: Install EPEL (when required)
+  include_tasks: install-epel.yml
+  when: ansible_os_family == 'RedHat' and pdns_rec_install_epel
+  tags:
+    - install
+
+- name: Install the PowerDNS Recursor package
+  package:
+    name: "{{ pdns_rec_package_name }}"
+    state: present
+  tags:
+    - install
+
+- name: Start and enable the PowerDNS Recursor service
+  service:
+    name: "{{ pdns_rec_service_name }}"
+    state: started
+    enabled: true
+  tags:
+    - service
+
+- name: Force handlers flush
+  meta: flush_handlers
+  when: pdns_rec_flush_handlers
+
+- name: Set PowerDNS Recursor service as primary DNS
+  lineinfile:
+    path: /etc/resolvconf/resolv.conf.d/head
+    regexp: '^nameserver 127.0.0.1'
+    line: 'nameserver 127.0.0.1'
+
+- name: Enable resolvconf updates
+  shell: 
+    resolvconf --enable-updates
+
+- name: Restart resolvconf to effect changes
+  shell: 
+    resolvconf -u
+

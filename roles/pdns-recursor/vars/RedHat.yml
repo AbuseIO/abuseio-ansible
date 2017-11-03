@@ -1,0 +1,5 @@
+---
+
+default_pdns_rec_user: "pdns-recursor"
+default_pdns_rec_group: "pdns-recursor"
+default_pdns_rec_config_dir: "/etc/pdns-recursor"

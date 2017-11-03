@@ -99,6 +99,57 @@
   when: artisan_commands.stdout.find('route:cache') != -1
   ignore_errors: yes
 
+- name: Create log directory
+  file:
+    path: "/var/log/abuseio"
+    state: directory
+    owner: syslog
+    group: adm
+    mode: 0660
+    recurse: yes
+
+- name: copy abuseio logrotate files
+  copy:
+    src: "{{ abuseio_basedir }}/extra/etc/logrotate.d/"
+    dest: /etc/logrotate.d/
+
+- name: copy abuseio syslog files
+  copy:
+    src: "{{ abuseio_basedir }}/extra/etc/rsyslog.d/"
+    dest: /etc/rsyslog.d/
+
+- name: restart syslog service 
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: syslog
+
+- name: copy abuseio systemd files
+  copy:
+    src: "{{ abuseio_basedir }}/extra/etc/systemd/system/"
+    dest: /etc/systemd/system/
+
+- name: Force systemd to reread configs
+  systemd: daemon_reload=yes
+
+- name: Enable and start AbuseIO Queue abuseio_queue_email_incoming
+  systemd:
+    name: abuseio_queue_email_incoming
+    state: started
+    enabled: True
+
+- name: Enable and start AbuseIO Queue abuseio_queue_email_outgoing
+  systemd:
+    name: abuseio_queue_email_outgoing
+    state: started
+    enabled: True
+
+- name: Enable and start AbuseIO Queue abuseio_queue_collector
+  systemd:
+    name: abuseio_queue_collector
+    state: started
+    enabled: True
+
 - name: Restart queues
   shell: chdir={{ abuseio_basedir }}
     /usr/bin/php  artisan queue:restart

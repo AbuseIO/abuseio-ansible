@@ -1,0 +1,13 @@
+---
+- name: reload postfix
+  systemd:
+    state: reloaded
+    daemon_reload: yes
+    name: postfix
+
+- name: newaliases
+  command: newaliases
+
+- name: reload postmap
+  command: postmap /etc/postfix/transport
+

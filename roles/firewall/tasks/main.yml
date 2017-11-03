@@ -42,3 +42,10 @@
 
 - import_tasks: disable-other-firewalls.yml
   when: firewall_disable_firewalld or firewall_disable_ufw
+
+- name: Update apt cache.
+  apt: update_cache=yes cache_valid_time=3600
+
+- name: Ensure Fail2ban is installed on Debian.
+  apt: name=fail2ban state=installed
+
