@@ -28,4 +28,38 @@
     group: 'root'
     mode: '0400'
 
+- name: Remove unnecessary users
+  user: name={{ item }} state=absent
+  with_items:
+    - games
+    - gnats
+    - irc
+    - list
+    - news
+    - proxy
+    - uucp
 
+- name: Set shell to nologin for users
+  user: name={{ item }} shell=/usr/sbin/nologin
+  with_items:
+    - daemon
+    - bin
+    - lp
+    - sys
+    - man
+    - mail
+    - backup
+    - nobody
+    - libuuid
+
+- name: Remove unnecessary groups
+  group: name={{ item }} state=absent
+  with_items:
+    - news
+    - uucp
+    - proxy
+    - list
+    - irc
+    - src
+    - gnats
+    - games

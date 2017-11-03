@@ -2,8 +2,8 @@
 - name: Upgrade APT to the latest packages
   apt: upgrade=dist
 
-- name: Configure {{ item }} - Install Package
-  apt: name={{ item }} state-installed
+- name: Configure Ubuntu - Install Packages
+  apt: name={{ item }} state=installed
   with_items:
     - apt-transport-https
     - ntp
