@@ -93,11 +93,15 @@
     /usr/bin/php artisan clear-compiled && /usr/bin/php artisan optimize
   when: artisan_commands.stdout.find('optimize') != -1
 
-- name: Cache routes
+- name: Generate APP KEY
   shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan route:cache
-  when: artisan_commands.stdout.find('route:cache') != -1
-  ignore_errors: yes
+    /usr/bin/php artisan key:generate
+  when: artisan_commands.stdout.find('key:generate') != -1
+
+- name: Generate Installation ID
+  shell: chdir={{ abuseio_basedir }}
+    /usr/bin/php artisan app:id
+  when: artisan_commands.stdout.find('app:id') != -1
 
 - name: Create log directory
   file:
@@ -107,6 +111,16 @@
     group: adm
     mode: 0660
     recurse: yes
+
+- name: Configure application sessions
+  template:
+    src: "templates/config/session.php.j2"
+    dest: "{{ abuseio_basedir }}/config/production/session.php"
+
+- name: Configure application base
+  template:
+    src: "templates/config/app.php.j2"
+    dest: "{{ abuseio_basedir }}/config/production/app.php"
 
 - name: copy abuseio logrotate files
   copy:

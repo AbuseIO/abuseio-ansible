@@ -92,5 +92,5 @@ config/production/session.php
     'httponly' => true,
     'secure' => true,
 
-add CSP-policy, based on hashes
+* add CSP-policy, based on hashes
 
