@@ -11,7 +11,7 @@
     id: C80E383C3DE9F082E01391A0366C67DE91CA5D5F
 
 - name: Configure {{ item }} - Install Package
-  action: apt pkg={{ item }} state=installed
+  apt: name={{ item }} state=installed
   with_items:
     - lynis
     - rkhunter
