@@ -15,4 +15,7 @@
   with_items:
     - lynis
     - rkhunter
+    - vim
+    - zip
+    - unzip
 

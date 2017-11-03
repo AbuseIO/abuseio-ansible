@@ -1,4 +1,7 @@
 ---
+- name: Update apt cache.
+  apt: update_cache=yes
+
 - name: Upgrade APT to the latest packages
   apt: upgrade=dist
 
