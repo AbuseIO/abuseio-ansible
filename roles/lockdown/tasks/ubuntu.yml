@@ -3,7 +3,7 @@
   apt: upgrade=dist
 
 - name: Configure {{ item }} - Install Package
-  action: apt pkg={{ item }} state-installed
+  apt: name={{ item }} state-installed
   with_items:
     - apt-transport-https
     - ntp
