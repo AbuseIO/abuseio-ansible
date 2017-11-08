@@ -1,5 +1,21 @@
 # {{ ansible_managed }}
+[mysql]
+user="{{ mysql_root_username }}"
+password="{{ mysql_root_password }}"
 
 [client]
 user="{{ mysql_root_username }}"
 password="{{ mysql_root_password }}"
+
+[mysql-client]
+user="{{ mysql_root_username }}"
+password="{{ mysql_root_password }}"
+
+[mysqldump]
+user="{{ mysql_root_username }}"
+password="{{ mysql_root_password }}"
+
+[mysqladmin]
+user="{{ mysql_root_username }}"
+password="{{ mysql_root_password }}"
+
