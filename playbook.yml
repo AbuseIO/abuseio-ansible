@@ -2,7 +2,7 @@
   gather_facts: yes
   hosts: localhost
   become: yes
-  become_method: sudo
+  become_method: su
   vars_files:
     - vars/abuseio.yml
     - vars/apache.yml
