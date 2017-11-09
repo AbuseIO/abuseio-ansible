@@ -10,6 +10,9 @@
     keyserver: keyserver.ubuntu.com
     id: C80E383C3DE9F082E01391A0366C67DE91CA5D5F
 
+- name: Update apt cache.
+  apt: update_cache=yes
+
 - name: Install tool Packages
   apt: name={{ item }} state=installed
   with_items:

@@ -116,11 +116,17 @@
   template:
     src: "templates/config/session.php.j2"
     dest: "{{ abuseio_basedir }}/config/production/session.php"
+    owner: abuseio
+    group: abuseio
+    mode: 0770
 
 - name: Configure application base
   template:
     src: "templates/config/app.php.j2"
     dest: "{{ abuseio_basedir }}/config/production/app.php"
+    owner: abuseio
+    group: abuseio
+    mode: 0770
 
 - name: copy abuseio logrotate files
   copy:
