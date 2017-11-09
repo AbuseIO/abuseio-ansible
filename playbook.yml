@@ -1,6 +1,8 @@
 - name: AbuseIO base installation
   gather_facts: yes
   hosts: localhost
+  become: yes
+  become_method: sudo
   vars_files:
     - vars/abuseio.yml
     - vars/apache.yml
