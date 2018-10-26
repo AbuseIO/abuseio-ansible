@@ -1,6 +1,6 @@
 - name: AbuseIO base installation
   gather_facts: yes
-  hosts: 159.69.208.241
+  hosts: localhost
   become: yes
   become_method: sudo
   vars_files:
