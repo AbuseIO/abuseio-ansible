@@ -1,4 +1,4 @@
-abuseio_version: "4.1"
+abuseio_version: "master"
 abuseio_basedir: "/opt/abuseio"
 abuseio_hostname: "abuseio.isp.local"
 
