@@ -129,14 +129,16 @@
     mode: 0770
 
 - name: copy abuseio logrotate files
-  copy:
+  synchronize:
     src: "{{ abuseio_basedir }}/extra/etc/logrotate.d/"
     dest: /etc/logrotate.d/
+  delegate_to: "{{ inventory_hostname }}"
 
 - name: copy abuseio syslog files
-  copy:
-    src: "{{ abuseio_basedir }}/extra/etc/rsyslog.d/"
-    dest: /etc/rsyslog.d/
+  synchronize:
+   src: "{{ abuseio_basedir }}/extra/etc/rsyslog.d/"
+   dest: /etc/rsyslog.d/
+  delegate_to: "{{ inventory_hostname }}"
 
 - name: restart syslog service 
   systemd:
@@ -145,9 +147,10 @@
     name: syslog
 
 - name: copy abuseio systemd files
-  copy:
+  synchronize:
     src: "{{ abuseio_basedir }}/extra/etc/systemd/system/"
     dest: /etc/systemd/system/
+  delegate_to: "{{ inventory_hostname }}"
 
 - name: Force systemd to reread configs
   systemd: daemon_reload=yes

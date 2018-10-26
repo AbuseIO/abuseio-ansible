@@ -1,8 +1,8 @@
 - name: AbuseIO base installation
   gather_facts: yes
-  hosts: localhost
+  hosts: 159.69.208.241
   become: yes
-  become_method: su
+  become_method: sudo
   vars_files:
     - vars/abuseio.yml
     - vars/apache.yml
@@ -22,8 +22,10 @@
     raw: python -c "import netaddr" || (apt -y update && apt install -y python-netaddr)
   - name: install ansible required packages, like python-dnspython
     raw: python -c "import dns.zone" || (apt -y update && apt install -y python-dnspython)
-  - name: run preflight checks
-    import_tasks: tests/preflight.yml
+  - name: install rsync
+    package:
+     name: rsync
+     state: present
 
   roles:
     - { role: firewall,             tags: 'firewall' }
