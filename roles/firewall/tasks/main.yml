@@ -47,5 +47,5 @@
   apt: update_cache=yes cache_valid_time=3600
 
 - name: Ensure Fail2ban is installed on Debian.
-  apt: name=fail2ban state=installed
+  apt: name=fail2ban state=present
 

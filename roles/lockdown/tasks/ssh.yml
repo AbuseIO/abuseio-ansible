@@ -69,7 +69,7 @@
     line: 'Banner /etc/issue.net'
 
 - name: Install Fail2Ban
-  apt: state=installed pkg=fail2ban
+  apt: state=present pkg=fail2ban
 
 - name: Reload ssh
   command: /bin/true
