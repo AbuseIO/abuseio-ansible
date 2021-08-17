@@ -4,7 +4,7 @@
   when: ansible_os_family == 'RedHat'
 
 - name: Ensure postfix is installed (Debian).
-  apt: name=postfix state=installed
+  apt: name=postfix state=present
   when: ansible_os_family == 'Debian'
 
 - name: Ensure postfix is started and enabled at boot.
