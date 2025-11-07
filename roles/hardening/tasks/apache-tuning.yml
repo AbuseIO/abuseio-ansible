@@ -1,0 +1,90 @@
+---
+# Apache module tuning for mod_evasive and mod_security
+
+- name: Check for a2enmod availability
+  stat:
+    path: /usr/sbin/a2enmod
+  register: a2enmod_sbin
+
+- name: Check for a2enmod in /usr/bin
+  stat:
+    path: /usr/bin/a2enmod
+  register: a2enmod_bin
+
+- name: Set fact for a2enmod presence
+  set_fact:
+    a2enmod_present: "{{ (a2enmod_sbin.stat.exists | default(false)) or (a2enmod_bin.stat.exists | default(false)) }}"
+
+# mod_evasive tuning
+- name: Ensure mod_evasive log directory exists
+  file:
+    path: /var/log/mod_evasive
+    state: directory
+    owner: root
+    group: adm
+    mode: '0755'
+  when: a2enmod_present | bool
+
+- name: Deploy mod_evasive tuning config
+  template:
+    src: evasive.conf.j2
+    dest: /etc/apache2/mods-available/evasive.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: a2enmod_present | bool
+  notify: reload apache
+
+# mod_security tuning
+- name: Ensure mod_security log directory exists
+  file:
+    path: /var/log/modsecurity
+    state: directory
+    owner: root
+    group: adm
+    mode: '0750'
+  when: a2enmod_present | bool
+
+- name: Ensure /etc/modsecurity exists
+  file:
+    path: /etc/modsecurity
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: a2enmod_present | bool
+
+- name: Deploy mod_security base configuration
+  template:
+    src: modsecurity.conf.j2
+    dest: /etc/modsecurity/modsecurity.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: a2enmod_present | bool
+  notify: reload apache
+
+- name: Install OWASP ModSecurity CRS if available
+  apt:
+    name: modsecurity-crs
+    state: present
+    update_cache: yes
+  when: a2enmod_present | bool
+
+- name: Add CRS includes to security2.conf when CRS installed
+  lineinfile:
+    path: /etc/apache2/mods-available/security2.conf
+    insertafter: EOF
+    line: "{{ item }}"
+    create: yes
+    backup: yes
+  loop:
+    - 'IncludeOptional /usr/share/modsecurity-crs/*.conf'
+    - 'IncludeOptional /etc/modsecurity/crs-setup.conf'
+  when: a2enmod_present | bool
+  notify: reload apache
+
+- name: Note Apache tuning skipped; Apache not installed
+  debug:
+    msg: "Apache not detected (a2enmod missing); skipping mod_evasive/mod_security tuning."
+  when: not (a2enmod_present | default(false))

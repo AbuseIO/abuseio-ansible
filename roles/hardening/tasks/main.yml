@@ -32,6 +32,12 @@
 - name: Include hardening tasks for ubuntu
   import_tasks: ubuntu.yml
 
+- name: Include auditd baseline rules
+  import_tasks: auditd.yml
+
+- name: Include Apache tuning tasks
+  import_tasks: apache-tuning.yml
+
 - name: Include hardening tasks from Lynis (safe subset)
   import_tasks: lynis-low.yml
   when: hardening_lynis_low_enabled | bool
@@ -39,6 +45,10 @@
 - name: Include hardening tasks from Lynis (medium subset)
   import_tasks: lynis-medium.yml
   when: hardening_lynis_medium_enabled | bool
+
+- name: Include hardening tasks from Lynis (suggestions subset)
+  import_tasks: lynis-suggestions.yml
+  when: hardening_lynis_suggestions_enabled | bool
 
 - name: Run Lynis audit and show summary
   import_tasks: lynis-run.yml

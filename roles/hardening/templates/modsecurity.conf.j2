@@ -1,0 +1,18 @@
+# Minimal but sane ModSecurity configuration
+SecRuleEngine On
+SecRequestBodyAccess On
+SecResponseBodyAccess Off
+SecResponseBodyMimeType text/plain text/html text/xml
+SecResponseBodyLimit 524288
+SecResponseBodyLimitAction ProcessPartial
+SecAuditEngine RelevantOnly
+SecAuditLog /var/log/modsecurity/audit.log
+SecAuditLogFormat JSON
+SecAuditLogParts ABIJDEFHZ
+SecAuditLogType Serial
+SecAuditLogStorageDir /var/log/modsecurity
+SecDebugLog /var/log/modsecurity/debug.log
+SecDebugLogLevel 1
+SecRuleRemoveById {{ modsec_remove_rule_ids | default('') }}
+SecServerSignature "Apache"
+SecRule ARGS_NAMES|ARGS|REQUEST_HEADERS|XML:/* "@rx (?:\x00|\xFF)" "id:1000001,phase:2,deny,log,msg:'Null byte detected'"

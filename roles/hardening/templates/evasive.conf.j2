@@ -1,0 +1,11 @@
+<IfModule mod_evasive20.c>
+    DOSHashTableSize    3097
+    DOSPageCount        20
+    DOSSiteCount        300
+    DOSPageInterval     1
+    DOSSiteInterval     1
+    DOSBlockingPeriod   120
+    DOSEmailNotify      {{ apache_evasive_email | default('root@localhost') }}
+    DOSLogDir           /var/log/mod_evasive
+    DOSWhitelist        127.0.0.1
+</IfModule>

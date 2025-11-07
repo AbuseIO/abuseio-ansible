@@ -1,0 +1,477 @@
+---
+- name: Check if fail2ban jail.conf exists
+  stat:
+    path: /etc/fail2ban/jail.conf
+  register: jail_conf
+
+- name: Copy fail2ban jail.conf to jail.local (DEB-0880)
+  copy:
+    src: /etc/fail2ban/jail.conf
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: yes
+    backup: yes
+    force: no
+  when: jail_conf.stat.exists
+  notify: restart fail2ban
+
+- name: Note fail2ban suggestion skipped
+  debug:
+    msg: "fail2ban jail.conf not found; suggestion DEB-0880 skipped."
+  when: not jail_conf.stat.exists
+
+# MAIL-8820: Disable VRFY command in Postfix
+- name: Disable Postfix VRFY command (MAIL-8820)
+  lineinfile:
+    path: /etc/postfix/main.cf
+    regexp: '^\s*disable_vrfy_command\s*=.*$'
+    line: 'disable_vrfy_command = yes'
+    create: yes
+    backup: yes
+  notify: reload postfix
+
+# HTTP-6640: Install and enable Apache mod_evasive
+- name: Install Apache mod_evasive (HTTP-6640)
+  apt:
+    name: libapache2-mod-evasive
+    state: present
+    update_cache: yes
+
+- name: Check for a2enmod availability
+  stat:
+    path: /usr/sbin/a2enmod
+  register: a2enmod_sbin
+
+- name: Check for a2enmod in /usr/bin
+  stat:
+    path: /usr/bin/a2enmod
+  register: a2enmod_bin
+
+- name: Set fact for a2enmod presence
+  set_fact:
+    a2enmod_present: "{{ (a2enmod_sbin.stat.exists | default(false)) or (a2enmod_bin.stat.exists | default(false)) }}"
+
+- name: Enable Apache mod_evasive
+  command: a2enmod evasive
+  register: evasive_enable
+  changed_when: "'already enabled' not in (evasive_enable.stdout | default('')) and 'already enabled' not in (evasive_enable.stderr | default(''))"
+  notify: reload apache
+  when: a2enmod_present | bool
+
+- name: Note mod_evasive enable skipped; Apache not installed
+  debug:
+    msg: "Apache not detected (a2enmod missing); skipping mod_evasive enable."
+  when: not (a2enmod_present | default(false))
+
+# HTTP-6643: Install and enable Apache mod_security
+- name: Install Apache mod_security (HTTP-6643)
+  apt:
+    name: libapache2-mod-security2
+    state: present
+    update_cache: yes
+
+- name: Enable Apache mod_security2
+  command: a2enmod security2
+  register: security2_enable
+  changed_when: "'already enabled' not in (security2_enable.stdout | default('')) and 'already enabled' not in (security2_enable.stderr | default(''))"
+  notify: reload apache
+  when: a2enmod_present | bool
+
+- name: Note mod_security2 enable skipped; Apache not installed
+  debug:
+    msg: "Apache not detected (a2enmod missing); skipping mod_security2 enable."
+  when: not (a2enmod_present | default(false))
+
+# SSH-7408: Consider hardening SSH configuration
+- name: Set AllowTcpForwarding no (SSH-7408)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*AllowTcpForwarding\s+'
+    line: 'AllowTcpForwarding no'
+    create: yes
+    backup: yes
+  notify: restart ssh
+
+- name: Set LogLevel VERBOSE (SSH-7408)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*LogLevel\s+'
+    line: 'LogLevel VERBOSE'
+    create: yes
+    backup: yes
+  notify: restart ssh
+
+- name: Set MaxAuthTries 3 (SSH-7408)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*MaxAuthTries\s+'
+    line: 'MaxAuthTries 3'
+    create: yes
+    backup: yes
+  notify: restart ssh
+
+- name: Set MaxSessions 2 (SSH-7408)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*MaxSessions\s+'
+    line: 'MaxSessions 2'
+    create: yes
+    backup: yes
+  notify: restart ssh
+
+- name: Set TCPKeepAlive no (SSH-7408)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*TCPKeepAlive\s+'
+    line: 'TCPKeepAlive no'
+    create: yes
+    backup: yes
+  notify: restart ssh
+
+- name: Set AllowAgentForwarding no (SSH-7408)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*AllowAgentForwarding\s+'
+    line: 'AllowAgentForwarding no'
+    create: yes
+    backup: yes
+  notify: restart ssh
+
+# AUTH-9230: Configure password hashing rounds in /etc/login.defs
+- name: Ensure ENCRYPT_METHOD is set to SHA512 (AUTH-9230)
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^\s*ENCRYPT_METHOD\s+'
+    line: 'ENCRYPT_METHOD SHA512'
+    backup: yes
+
+- name: Set SHA_CRYPT_MIN_ROUNDS (AUTH-9230)
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^\s*SHA_CRYPT_MIN_ROUNDS\s+'
+    line: 'SHA_CRYPT_MIN_ROUNDS 5000'
+    backup: yes
+
+- name: Set SHA_CRYPT_MAX_ROUNDS (AUTH-9230)
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^\s*SHA_CRYPT_MAX_ROUNDS\s+'
+    line: 'SHA_CRYPT_MAX_ROUNDS 10000'
+    backup: yes
+
+# AUTH-9262: Install PAM module for password strength (pam_pwquality)
+- name: Install libpam-pwquality (AUTH-9262)
+  apt:
+    name: libpam-pwquality
+    state: present
+    update_cache: yes
+
+- name: Ensure pam_pwquality is configured in common-password (AUTH-9262)
+  lineinfile:
+    path: /etc/pam.d/common-password
+    regexp: '^\s*password\s+requisite\s+pam_pwquality\.so.*$'
+    line: 'password requisite pam_pwquality.so retry=3 minlen=12 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1'
+    backup: yes
+
+# AUTH-9282: Set expire dates for password-protected accounts where possible
+- name: Gather local user accounts with UID >= 1000 (AUTH-9282)
+  command: "awk -F: '($3>=1000 && $3<65534 && $1!=\"nobody\") {print $1}' /etc/passwd"
+  register: local_users
+
+- name: Enforce password aging for local users (AUTH-9282)
+  command: chage -M 90 -m 7 {{ item }}
+  loop: "{{ local_users.stdout_lines | default([]) }}"
+  changed_when: false
+
+# HRDN-7222: Restrict compilers to root-only
+- name: Detect compiler binaries (HRDN-7222)
+  shell: |
+    set -euo pipefail
+    for d in /usr/bin /usr/local/bin; do
+      [ -d "$d" ] || continue
+      find "$d" -maxdepth 1 -type f -perm -111 -regextype posix-extended \
+        -regex '.*/(cc|gcc|g\+\+|clang|clang\+\+|gcc-[0-9]+|g\+\+-[0-9]+|clang-[0-9]+|clang\+\+-[0-9]+|.*-gcc|.*-g\+\+)$'
+    done | sort -u
+  args:
+    executable: /bin/bash
+  register: compilers_found
+  changed_when: false
+
+- name: Restrict compiler execution to root (HRDN-7222)
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: '0700'
+    follow: yes
+  loop: "{{ compilers_found.stdout_lines | default([]) }}"
+  when: (compilers_found.stdout | default('')) != ''
+
+- name: Note compiler restriction skipped (HRDN-7222)
+  debug:
+    msg: "No compilers detected under /usr/bin or /usr/local/bin; skipping HRDN-7222."
+  when: (compilers_found.stdout | default('')) == ''
+
+# DEB-0810: Install apt-listbugs to display critical bugs prior to installs
+- name: Check availability of apt-listbugs (DEB-0810)
+  command: apt-cache show apt-listbugs
+  register: apt_listbugs_info
+  changed_when: false
+  failed_when: false
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Check install candidate for apt-listbugs (DEB-0810)
+  shell: awk '/Candidate:/ {print $2}' <(apt-cache policy apt-listbugs)
+  args:
+    executable: /bin/bash
+  register: apt_listbugs_candidate
+  changed_when: false
+  failed_when: false
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Install apt-listbugs (DEB-0810)
+  apt:
+    name: apt-listbugs
+    state: present
+    update_cache: yes
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - apt_listbugs_info.rc == 0
+    - (apt_listbugs_candidate.stdout | default('')) != '(none)'
+
+- name: Note apt-listbugs not available; skipping (DEB-0810)
+  debug:
+    msg: "apt-listbugs unavailable: no install candidate or missing in cache; skipping DEB-0810."
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - apt_listbugs_info.rc != 0 or (apt_listbugs_candidate.stdout | default('')) == '(none)'
+
+# DEB-0811: Install apt-listchanges to display significant changes prior to upgrades
+- name: Check availability of apt-listchanges (DEB-0811)
+  command: apt-cache show apt-listchanges
+  register: apt_listchanges_info
+  changed_when: false
+  failed_when: false
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Check install candidate for apt-listchanges (DEB-0811)
+  shell: awk '/Candidate:/ {print $2}' <(apt-cache policy apt-listchanges)
+  args:
+    executable: /bin/bash
+  register: apt_listchanges_candidate
+  changed_when: false
+  failed_when: false
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Install apt-listchanges (DEB-0811)
+  apt:
+    name: apt-listchanges
+    state: present
+    update_cache: yes
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - apt_listchanges_info.rc == 0
+    - (apt_listchanges_candidate.stdout | default('')) != '(none)'
+
+- name: Deploy apt-listchanges configuration (DEB-0811)
+  copy:
+    dest: /etc/apt/listchanges.conf
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [apt]
+      frontend=text
+      email_address={{ apt_listchanges_email | default('root') }}
+      confirm=false
+      headers=false
+      show_changes=true
+      which=both
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - apt_listchanges_info.rc == 0
+
+- name: Note apt-listchanges not available; skipping (DEB-0811)
+  debug:
+    msg: "apt-listchanges unavailable: no install candidate or missing in cache; skipping DEB-0811."
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - apt_listchanges_info.rc != 0 or (apt_listchanges_candidate.stdout | default('')) == '(none)'
+
+# USB-1000: Disable USB storage drivers when not used
+- name: Blacklist usb-storage modules (USB-1000)
+  copy:
+    dest: /etc/modprobe.d/usb-storage-blacklist.conf
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      # Disable USB storage drivers to prevent unauthorized data exfiltration
+      blacklist usb-storage
+      blacklist usb_storage
+      install usb-storage /bin/true
+      install usb_storage /bin/true
+
+- name: Remove usb-storage module if loaded (USB-1000)
+  command: modprobe -r usb-storage
+  register: remove_usb_storage
+  changed_when: "(remove_usb_storage.rc | default(1)) == 0"
+  failed_when: false
+
+# NAME-4028: Check DNS configuration for DNS domain name
+- name: Gather DNS domain via hostname -d (NAME-4028)
+  command: hostname -d
+  register: hostname_domain
+  changed_when: false
+  failed_when: false
+
+- name: Parse resolv.conf for domain/search (NAME-4028)
+  shell: awk '/^(domain|search)/ {print $2}' /etc/resolv.conf
+  args:
+    executable: /bin/bash
+  register: resolv_domains
+  changed_when: false
+  failed_when: false
+
+- name: Report DNS domain name configuration (NAME-4028)
+  debug:
+    msg: "Detected domains: hostname -d='{{ hostname_domain.stdout | default('') }}', resolv.conf='{{ resolv_domains.stdout | default('') }}'"
+  when: (hostname_domain.stdout | default('')) != '' or (resolv_domains.stdout | default('')) != ''
+
+- name: Warn DNS domain name not found (NAME-4028)
+  debug:
+    msg: "No DNS domain name detected; check /etc/resolv.conf and hostname configuration."
+  when: (hostname_domain.stdout | default('')) == '' and (resolv_domains.stdout | default('')) == ''
+
+# PKGS-7346: Purge old/removed packages with residual configs
+- name: List removed packages with residual configs (PKGS-7346)
+  shell: dpkg -l | awk '/^rc/ {print $2}'
+  register: residual_pkgs
+  changed_when: false
+  failed_when: false
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Purge residual packages (PKGS-7346)
+  apt:
+    name: "{{ item }}"
+    state: absent
+    purge: yes
+  loop: "{{ residual_pkgs.stdout_lines | default([]) }}"
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - (residual_pkgs.stdout | default('')) | trim != ''
+
+- name: Note no residual packages to purge (PKGS-7346)
+  debug:
+    msg: "No residual packages (state 'rc') found to purge."
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - (residual_pkgs.stdout | default('')) | trim == ''
+
+# PKGS-7370: Install debsums utility for package verification
+- name: Install debsums (PKGS-7370)
+  apt:
+    name: debsums
+    state: present
+    update_cache: yes
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+# PKGS-7394: Install apt-show-versions for patch management
+- name: Install apt-show-versions (PKGS-7394)
+  apt:
+    name: apt-show-versions
+    state: present
+    update_cache: yes
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+# BANN-7126: Add legal banner to /etc/issue
+- name: Deploy legal banner to /etc/issue (BANN-7126)
+  copy:
+    dest: /etc/issue
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      Authorized access only. Usage may be monitored and recorded.
+      By proceeding, you consent to monitoring. Disconnect immediately if not authorized.
+
+# BANN-7130: Add legal banner to /etc/issue.net
+- name: Deploy legal banner to /etc/issue.net (BANN-7130)
+  copy:
+    dest: /etc/issue.net
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      Authorized access only. Usage may be monitored and recorded.
+      By proceeding, you consent to monitoring. Disconnect immediately if not authorized.
+
+# ACCT-9622: Enable process accounting
+- name: Install acct package (ACCT-9622)
+  apt:
+    name: acct
+    state: present
+    update_cache: yes
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Enable and start acct service (ACCT-9622)
+  service:
+    name: acct
+    state: started
+    enabled: yes
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Verify process accounting file exists (ACCT-9622)
+  stat:
+    path: /var/log/account/pacct
+  register: pacct_file
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Note acct may use different path or provider (ACCT-9622)
+  debug:
+    msg: "Process accounting file not found at /var/log/account/pacct; verify distro-specific path."
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - not pacct_file.stat.exists
+
+# ACCT-9626: Enable sysstat to collect accounting data
+- name: Install sysstat (ACCT-9626)
+  apt:
+    name: sysstat
+    state: present
+    update_cache: yes
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Enable sysstat collection in /etc/default/sysstat (ACCT-9626)
+  lineinfile:
+    path: /etc/default/sysstat
+    regexp: '^\s*ENABLED\s*=.*$'
+    line: 'ENABLED="true"'
+    create: yes
+    backup: yes
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Gather service facts (ACCT-9626)
+  service_facts:
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Start/enable sysstat service if present (ACCT-9626)
+  service:
+    name: sysstat
+    state: started
+    enabled: yes
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - ansible_facts.services is defined
+    - (ansible_facts.services['sysstat.service'] is defined) or (ansible_facts.services['sysstat'] is defined)
+
+- name: Note sysstat service unit not present; relying on cron/timer (ACCT-9626)
+  debug:
+    msg: "sysstat service unit not detected; collection will run via cron/timer as provided by the package."
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - ansible_facts.services is defined
+    - (ansible_facts.services['sysstat.service'] is not defined) and (ansible_facts.services['sysstat'] is not defined)
+

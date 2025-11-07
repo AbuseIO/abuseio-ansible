@@ -1,21 +1,39 @@
 ---
-- name: restart ntp
+# Handlers for hardening role services
+
+- name: restart fail2ban
   service:
-    name: "ntp"
+    name: fail2ban
     state: restarted
-
-- name: restart ssh
-  service:
-    name: "ssh"
-    state: restarted
-
-- name: reload sysctl.conf
-  command: /sbin/sysctl -p
-
-- name: flush routes
-  command: /sbin/sysctl -w net.ipv4.route.flush=1
 
 - name: reload postfix
   service:
     name: postfix
     state: reloaded
+
+- name: reload apache
+  service:
+    name: apache2
+    state: reloaded
+
+- name: restart ssh
+  service:
+    name: ssh
+    state: restarted
+
+- name: restart auditd
+  service:
+    name: auditd
+    state: restarted
+
+- name: reload sysctl.conf
+  command: sysctl --system
+
+- name: flush routes
+  shell: |
+    if command -v ip >/dev/null 2>&1; then
+      ip route flush cache || true
+    fi
+    sysctl -w net.ipv4.route.flush=1 || true
+  args:
+    executable: /bin/bash
