@@ -1,0 +1,39 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install needrestart for service restart handling
+  apt:
+    name: needrestart
+    state: present
+
+- name: Configure needrestart to automatic mode
+  copy:
+    dest: /etc/needrestart/conf.d/50-ansible.conf
+    content: |
+      $nrconf{restart} = 'a';
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Perform full dist-upgrade
+  apt:
+    upgrade: dist
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    NEEDRESTART_MODE: a
+
+- name: Add Ondrej PHP PPA
+  apt_repository:
+    repo: ppa:ondrej/php
+    state: present
+
+- name: Install base packages
+  apt:
+    name:
+      - git
+      - unzip
+      - acl
+    state: present

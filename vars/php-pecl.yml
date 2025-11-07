@@ -1,6 +1,0 @@
-php_pecl_install_pecl: false
-php_pecl_install_command: "pecl install"
-php_pecl_extensions:
-  - redis
-  - xdebug
-  - mailparse

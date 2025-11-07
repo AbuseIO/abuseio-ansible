@@ -1,0 +1,158 @@
+---
+# Safe Lynis recommendations for Ubuntu (low-risk items)
+
+- name: Install auditd package (recommended)
+  apt:
+    name: auditd
+    state: present
+    update_cache: yes
+
+- name: Ensure auditd service is enabled and running
+  service:
+    name: auditd
+    state: started
+    enabled: yes
+
+- name: Ensure ntp/chrony is installed (time sync)
+  apt:
+    name: chrony
+    state: present
+    update_cache: yes
+
+- name: Ensure chrony service is enabled and running
+  service:
+    name: chrony
+    state: started
+    enabled: yes
+
+- name: Enable IPv4 TCP SYN cookies
+  sysctl:
+    name: net.ipv4.tcp_syncookies
+    value: '1'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: Disable IPv4 forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '0'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: Enable reverse path filtering
+  sysctl:
+    name: net.ipv4.conf.all.rp_filter
+    value: '1'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: Ignore ICMP broadcast requests
+  sysctl:
+    name: net.ipv4.icmp_echo_ignore_broadcasts
+    value: '1'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: Enable ignore bogus ICMP errors
+  sysctl:
+    name: net.ipv4.icmp_ignore_bogus_error_responses
+    value: '1'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: Restrict dmesg to root only
+  sysctl:
+    name: kernel.dmesg_restrict
+    value: '1'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: Restrict kernel pointers (kptr)
+  sysctl:
+    name: kernel.kptr_restrict
+    value: '2'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: Restrict kernel debug (kld)
+  sysctl:
+    name: kernel.sysrq
+    value: '0'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: Ensure unattended-upgrades is installed
+  apt:
+    name: unattended-upgrades
+    state: present
+    update_cache: yes
+
+- name: Ensure apt periodic and unattended upgrades are enabled
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Ensure ufw is installed
+  apt:
+    name: ufw
+    state: present
+    update_cache: yes
+
+# Set default policies before enabling, to avoid lockout
+- name: Set ufw default incoming policy to deny
+  ufw:
+    policy: deny
+    direction: incoming
+
+- name: Set ufw default outgoing policy to allow
+  ufw:
+    policy: allow
+    direction: outgoing
+
+- name: Allow SSH before enabling ufw
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Enable ufw
+  ufw:
+    state: enabled
+
+- name: Ensure source routing is disabled
+  sysctl:
+    name: net.ipv4.conf.all.accept_source_route
+    value: '0'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: Ensure securetmp is present (noexec/nosuid is high risk, skip)
+  file:
+    path: /tmp
+    state: directory
+    owner: root
+    group: root
+    mode: '1777'

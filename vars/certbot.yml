@@ -1,9 +1,0 @@
-certbot_auto_renew: true
-certbot_auto_renew_user: "{{ ansible_user }}"
-certbot_auto_renew_hour: 3
-certbot_auto_renew_minute: 30
-certbot_install_from_source: yes
-certbot_repo: https://github.com/certbot/certbot.git
-certbot_version: master
-certbot_keep_updated: yes
-certbot_dir: /opt/certbot

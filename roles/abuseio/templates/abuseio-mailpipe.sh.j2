@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="{{ abuseio_home }}"
+USER="abuseio"
+
+if [[ ! -d "$APP_DIR" ]]; then
+  echo "AbuseIO app directory not found: $APP_DIR" >&2
+  exit 75
+fi
+
+# Read mail from stdin and pass to artisan command
+sudo -u "$USER" /usr/bin/php "$APP_DIR"/artisan {{ abuseio_mailpipe_command }} --stdin
+
+exit $?

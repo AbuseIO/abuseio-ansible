@@ -1,5 +1,0 @@
-phpmyadmin_mysql_host: localhost
-phpmyadmin_mysql_port: 3306
-phpmyadmin_mysql_connect_type: tcp
-phpmyadmin_mysql_user: root
-phpmyadmin_mysql_password: "{{ abuseio_mysql_root_password }}"

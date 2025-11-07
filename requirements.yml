@@ -1,0 +1,7 @@
+---
+# Third-party roles to reuse where practical.
+- src: geerlingguy.certbot
+- src: geerlingguy.apache
+- src: geerlingguy.php
+- src: geerlingguy.mysql
+- src: geerlingguy.postfix

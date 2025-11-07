@@ -1,7 +1,0 @@
----
-- src: geerlingguy.repo-remi
-- src: geerlingguy.repo-dotdeb
-- src: geerlingguy.apache
-- src: geerlingguy.mysql
-- src: geerlingguy.php
-- src: geerlingguy.php-mysql

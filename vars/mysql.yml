@@ -1,8 +1,0 @@
-mysql_root_password: "{{ abuseio_mysql_root_password }}"
-mysql_databases:
-  - name: "{{ abuseio_mysql_database_name }}"
-mysql_users:
-  - name: "{{ abuseio_mysql_database_user }}"
-    host: "localhost"
-    password: "{{ abuseio_mysql_database_password }}"
-    priv: "{{ abuseio_mysql_database_name }}.*:ALL"

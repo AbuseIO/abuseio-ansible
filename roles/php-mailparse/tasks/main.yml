@@ -1,13 +1,74 @@
 ---
-# tasks file for php-mailparse
-- name: Place PHP mailparse configuration file in place.
-  template:
-    src: mailparse.ini.j2
-    dest: "{{ item }}/conf.d/mailparse.ini"
+- name: Install mailparse build prerequisites
+  apt:
+    name:
+      - php-pear
+      - php8.4-dev
+      - php8.4-mbstring
+      - libmagic-dev
+      - libpcre3-dev
+      - autoconf
+      - gcc
+      - make
+      - re2c
+      - pkg-config
+    state: present
+    update_cache: yes
+
+- name: Check if mailparse is already installed
+  command: php -m
+  register: php_modules
+  changed_when: false
+
+- name: Download mailparse source tarball
+  get_url:
+    url: https://pecl.php.net/get/mailparse-3.1.9.tgz
+    dest: /tmp/mailparse-3.1.9.tgz
+  when: "'mailparse' not in php_modules.stdout"
+
+- name: Extract mailparse source
+  unarchive:
+    src: /tmp/mailparse-3.1.9.tgz
+    dest: /tmp/
+    remote_src: yes
+  when: "'mailparse' not in php_modules.stdout"
+
+- name: Build and install mailparse from source (patch mbstring check)
+  shell: |
+    set -euo pipefail
+    cd /tmp/mailparse-3.1.9
+    phpize
+    ./configure
+    # Workaround mbstring detection bug: comment out compile-time #error
+    sed -i 's/^#error The mailparse extension requires the mbstring extension!$/\/\/&/' mailparse.c
+    make
+    make install
+  args:
+    chdir: /tmp/mailparse-3.1.9
+    executable: /bin/bash
+  when: "'mailparse' not in php_modules.stdout"
+
+- name: Configure mailparse extension ini
+  copy:
+    dest: /etc/php/8.4/mods-available/mailparse.ini
+    content: "extension=mailparse.so\n"
     owner: root
     group: root
     mode: 0644
-  with_items: "{{ php_conf_paths }}"
-  notify: restart webserver
-  when: php_use_managed_ini
 
+- name: Enable mailparse via phpenmod
+  command: phpenmod mailparse
+
+- name: Validate mailparse via php -i
+  shell: php -i | grep -i 'mailparse support'
+  register: mailparse_support
+  changed_when: false
+  args:
+    executable: /bin/bash
+
+- name: Assert mailparse support is enabled
+  assert:
+    that:
+      - "'mailparse support => enabled' in mailparse_support.stdout"
+    fail_msg: "mailparse support not enabled; got: {{ mailparse_support.stdout | default('') }}"
+    success_msg: "mailparse support => enabled"

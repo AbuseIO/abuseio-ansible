@@ -1,0 +1,19 @@
+---
+- name: Restrict Core Dumps - update limits
+  lineinfile:
+    dest: /etc/security/limits.conf
+    insertbefore: "# End of file"
+    line: "*  hard  core  0"
+
+- name: Restrict Core Dumps - cleanup kernal params
+  lineinfile:
+    dest: /etc/sysctl.conf
+    line: "fs.suid_dumpable = 0"
+  notify:
+    - reload sysctl.conf
+
+- name: Restrict Core Dumps - remove apport
+  package:
+    name: apport
+    state: absent
+  when: ansible_distribution == "Ubuntu"

@@ -1,0 +1,37 @@
+---
+- name: Enable UFW and base policy
+  ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+
+- name: Allow outbound by default
+  ufw:
+    state: enabled
+    policy: allow
+    direction: outgoing
+
+- name: Allow SMTP
+  ufw:
+    rule: allow
+    port: 25
+    proto: tcp
+
+- name: Allow HTTP
+  ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+
+- name: Allow HTTPS
+  ufw:
+    rule: allow
+    port: 443
+    proto: tcp
+
+- name: Allow SSH from admin CIDR only
+  ufw:
+    rule: allow
+    port: 22
+    proto: tcp
+    from_ip: "{{ ssh_admin_cidr }}"

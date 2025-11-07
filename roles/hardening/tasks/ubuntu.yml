@@ -1,0 +1,31 @@
+- name: Configure Ubuntu - Install Packages
+  apt: name={{ item }} state=present
+  with_items:
+    - apt-transport-https
+    - ntp
+    - logwatch
+
+- name: Configure logwatch - Email log summary daily
+  lineinfile: dest=/etc/cron.daily/00logwatch
+              regexp="^/usr/sbin/logwatch"
+              line="/usr/sbin/logwatch --output mail --mailto {{ abuseio_admin_contact }} --detail high"
+              state=present create=yes
+
+- name: Set Permissions on bootloader config
+  file:
+    path: "/boot/grub/grub.cfg"
+    state: file
+    mode: og-rwx
+
+- name: Set Warning Banner for Standard Login Services
+  template: src=common-motd.j2 dest={{ item }} backup=yes
+  changed_when: false
+  with_items:
+    - /etc/motd
+    - /etc/issue
+    - /etc/issue.net
+
+# Shared memory
+- name: Secure tmpfs read only
+  mount: name=/dev/shm src=tmpfs fstype=tmpfs opts=rw,nosuid,nodev,noexec state=present
+  tags: tmpfs

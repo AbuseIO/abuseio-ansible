@@ -1,0 +1,85 @@
+---
+# Defaults 
+# Do not change these, unless you know what you are doing
+php_packages:
+  - php8.4
+  - php8.4-cli
+  - php8.4-common
+  - php8.4-dev
+  - php8.4-gd
+  - php8.4-mbstring
+  - php8.4-xml
+  - php8.4-curl
+  - php8.4-intl
+  - php8.4-bcmath
+  - php8.4-zip
+  - libapache2-mod-php8.4
+  - php8.4-mysql
+  - php-apcu
+php_enablerepo: ""
+php_packages_state: present
+
+# AbuseIO 
+abuseio_user: "abuseio"
+abuseio_group: "abuseio"
+abuseio_home: "/opt/abuseio"
+abuseio_repo: "https://github.com/AbuseIO/abuseio.git"
+abuseio_mailpipe_command: "abuseio:receive"
+
+# Apache
+apache_remove_default_vhost: true
+apache_vhosts:
+  - servername: "{{ abuseio_hostname }}"
+    documentroot: "{{ abuseio_home }}/public"
+    extra_parameters: |
+      <Directory "{{ abuseio_home }}/public">
+          AllowOverride All
+          Require all granted
+      </Directory>
+      Header always add Strict-Transport-Security "max-age=15552000; includeSubDomains"
+      Header always add X-Content-Type-Options "nosniff"
+      Header always add X-Frame-Options "SAMEORIGIN"
+      Header always add X-XSS-Protection "1; mode=block"
+
+# MariaDB
+mysql_daemon: mariadb
+mysql_packages:
+  - mariadb-server
+  - mariadb-client
+mysql_databases:
+  - name: "{{ abuseio_db_name }}"
+    encoding: utf8mb4
+    collation: utf8mb4_unicode_ci
+mysql_users:
+  - name: "{{ abuseio_db_user }}"
+    host: "%"
+    password: "{{ abuseio_db_password }}"
+    priv: "{{ abuseio_db_name }}.*:ALL"
+
+# Postfix
+postfix_myorigin: "{{ abuseio_hostname }}"
+postfix_myhostname: "{{ abuseio_hostname }}"
+postfix_mydestination: "{{ abuseio_hostname }}, localhost, localhost.localdomain"
+postfix_inet_interfaces: "all"
+postfix_smtpd_use_tls: true
+postfix_smtpd_tls_cert_file: "/etc/letsencrypt/live/{{ abuseio_hostname }}/fullchain.pem"
+postfix_smtpd_tls_key_file: "/etc/letsencrypt/live/{{ abuseio_hostname }}/privkey.pem"
+postfix_smtpd_tls_security_level: "may"
+postfix_smtp_tls_security_level: "may"
+postfix_aliases:
+  - name: root
+    value: "admin@{{ abuseio_hostname }}"
+  - name: abuse
+    value: "|/usr/local/bin/abuseio-mailpipe"
+
+# Certbot
+certbot_auto_renew: true
+certbot_auto_renew_hour: 3
+certbot_auto_renew_minute: 30
+certbot_auto_renew_user: "{{ ansible_user }}"
+certbot_certs:
+  - domains:
+      - "{{ abuseio_hostname }}"
+    register: yes
+    email: "admin@{{ abuseio_hostname }}"
+    webroot: "{{ abuseio_home }}/public"

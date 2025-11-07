@@ -1,0 +1,9 @@
+---
+- name: Configure Postfix smtpd_banner to hide FQDN
+  lineinfile:
+    path: /etc/postfix/main.cf
+    regexp: '^\s*smtpd_banner\s*=.*$'
+    line: 'smtpd_banner = ESMTP'
+    create: yes
+    backup: yes
+  notify: reload postfix

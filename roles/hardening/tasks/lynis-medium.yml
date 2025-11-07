@@ -1,0 +1,114 @@
+---
+# Lynis recommendations for Ubuntu (medium-risk items, gated)
+
+# Note: Medium-risk tasks are chosen to be impactful but may affect services.
+# They are safe on most systems but can be disruptive depending on workloads.
+
+- name: Disable core dumps via fs.suid_dumpable
+  sysctl:
+    name: fs.suid_dumpable
+    value: '0'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: Disable kernel module loading at runtime (lsm lockdown-like)
+  lineinfile:
+    path: /etc/modprobe.d/hardening-blacklist.conf
+    create: yes
+    mode: '0644'
+    line: 'install cramfs /bin/true'
+
+- name: Blacklist uncommon/legacy filesystems
+  copy:
+    dest: /etc/modprobe.d/blacklist-filesystems.conf
+    content: |
+      blacklist cramfs
+      blacklist freevxfs
+      blacklist jffs2
+      blacklist hfs
+      blacklist hfsplus
+      blacklist squashfs
+      blacklist udf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "Tighten SSH: disable root login"
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*PermitRootLogin\s+'
+    line: 'PermitRootLogin no'
+    create: yes
+    backup: yes
+  notify: restart ssh
+
+- name: "Tighten SSH: limit authentication tries"
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*MaxAuthTries\s+'
+    line: 'MaxAuthTries 4'
+    create: yes
+    backup: yes
+  notify: restart ssh
+
+- name: "Harden sysctl: disable packet redirects"
+  sysctl:
+    name: net.ipv4.conf.all.accept_redirects
+    value: '0'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: "Harden sysctl: disable secure ICMP redirects"
+  sysctl:
+    name: net.ipv4.conf.all.secure_redirects
+    value: '0'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: "Harden sysctl: log martians"
+  sysctl:
+    name: net.ipv4.conf.all.log_martians
+    value: '1'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  notify: reload sysctl.conf
+
+- name: "Harden PAM limits: set default umask"
+  lineinfile:
+    path: /etc/pam.d/common-session
+    insertafter: EOF
+    line: 'session optional pam_umask.so umask=027'
+    create: yes
+
+- name: "Harden login.defs: set PASS_MAX_DAYS and PASS_MIN_DAYS"
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^\s*PASS_MAX_DAYS\s+'
+    line: 'PASS_MAX_DAYS 90'
+    backup: yes
+
+- name: "Harden login.defs: set PASS_MIN_DAYS"
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^\s*PASS_MIN_DAYS\s+'
+    line: 'PASS_MIN_DAYS 7'
+    backup: yes
+
+- name: Ensure rsyslog is installed and enabled
+  apt:
+    name: rsyslog
+    state: present
+    update_cache: yes
+
+- name: Ensure rsyslog service is running and enabled
+  service:
+    name: rsyslog
+    state: started
+    enabled: yes

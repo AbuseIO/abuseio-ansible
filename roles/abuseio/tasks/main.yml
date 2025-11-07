@@ -1,141 +1,203 @@
 ---
-# tasks file for abuseio
-- name: Pulling AbuseIO Version {{ abuseio_version }} from Gitlab
-  git:
-    repo: 'https://github.com/AbuseIO/AbuseIO.git'
-    dest: /opt/abuseio
-    version: "{{ abuseio_version }}"
-    force: yes
-
 - name: Create abuseio group
   group:
-    name: abuseio
+    name: "{{ abuseio_group }}"
     state: present
 
 - name: Create abuseio user
   user:
-    name: abuseio
-    shell: /bin/bash
-    createhome: no
-    home: /opt/abuseio
-    groups: abuseio
-    append: yes
+    name: "{{ abuseio_user }}"
+    group: "{{ abuseio_group }}"
+    shell: /bin/false
+    create_home: no
+    home: "{{ abuseio_home }}"
 
-- name: Adding existing user '{{ item }}' to group abuseio
+- name: Create app directory
+  file:
+    path: "{{ abuseio_home }}"
+    state: directory
+    owner: "{{ abuseio_user }}"
+    group: "{{ abuseio_group }}"
+    mode: 0750
+
+- name: Fix ownership recursively when mismatched
+  file:
+    path: "{{ abuseio_home }}"
+    state: directory
+    owner: "{{ abuseio_user }}"
+    group: "{{ abuseio_group }}"
+    recurse: yes
+  # enforce ownership unconditionally to avoid safe.directory mismatches
+
+- name: Add git safe.directory (system-wide)
+  command: git config --system --add safe.directory {{ abuseio_home }}
+  become: yes
+  become_user: root
+
+- name: Add git safe.directory exception for app user
+  command: git config --global --add safe.directory {{ abuseio_home }}
+  become: yes
+  become_user: "{{ abuseio_user }}"
+
+- name: Clone AbuseIO 5.0
+  git:
+    repo: "{{ abuseio_repo }}"
+    version: "{{ abuseio_git_version }}"
+    dest: "{{ abuseio_home }}"
+    single_branch: yes
+    update: yes
+    force: yes
+  register: abuseio_git
+  become: yes
+  become_user: "{{ abuseio_user }}"
+
+- name: Ensure www-data and postfix are in abuseio group
   user:
-    name: '{{ item }}'
-    groups: abuseio
+    name: "{{ item }}"
+    groups: "{{ abuseio_group }}"
     append: yes
-  with_items:
-    - "www-data"
-    - "postfix"
-  notify: restart apache
+  loop:
+    - www-data
+    - postfix
 
-- name: create ENV configuration.
+- name: Install Composer
+  shell: |
+    set -euo pipefail
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    php composer-setup.php
+    php -r "unlink('composer-setup.php');"
+    mv composer.phar /usr/bin/composer
+  args:
+    creates: /usr/bin/composer
+    executable: /bin/bash
+
+- name: Run composer install (no dev)
+  command: composer install --no-dev --no-interaction
+  args:
+    chdir: "{{ abuseio_home }}"
+  become: yes
+  become_user: "{{ abuseio_user }}"
+
+- name: Place .env configuration
   template:
     src: .env.j2
-    dest: "{{ abuseio_basedir }}/.env"
-    owner: abuseio
-    group: abuseio
-    mode: 0660
+    dest: "{{ abuseio_home }}/.env"
+    owner: "{{ abuseio_user }}"
+    group: "{{ abuseio_group }}"
+    mode: 0640
 
-- name: Update permissions on abuseio base installation
+- name: Generate app key
+  command: php artisan key:generate --force
+  args:
+    chdir: "{{ abuseio_home }}"
+  register: appkey_gen
+  changed_when: "'Application key set' in appkey_gen.stdout or 'Application key set' in appkey_gen.stderr"
+  become_user: "{{ abuseio_user }}"
+
+- name: Run database migrations
+  command: php artisan migrate --force
+  args:
+    chdir: "{{ abuseio_home }}"
+  become_user: "{{ abuseio_user }}"
+
+- name: Run database migrations to apply queue table
+  command: php artisan migrate --force
+  args:
+    chdir: "{{ abuseio_home }}"
+  become_user: "{{ abuseio_user }}"
+
+- name: Set permissions on storage and bootstrap cache
   file:
-    path: '{{ abuseio_basedir }}'
+    path: "{{ abuseio_home }}/{{ item }}"
     state: directory
-    owner: abuseio
-    group: abuseio
+    mode: "u=rwX,g=rwX,o="
     recurse: yes
+  loop:
+    - storage
+    - bootstrap/cache
 
-- name: Update permissions on abuseio storage dir
-  file:
-    path: "{{ abuseio_basedir }}/storage"
-    state: directory
-    owner: abuseio
-    group: abuseio
-    mode: 0770
-    recurse: yes
+- name: Ensure scheduler cron exists
+  cron:
+    name: "AbuseIO Laravel scheduler"
+    user: "{{ abuseio_user }}"
+    minute: "*"
+    job: "php {{ abuseio_home }}/artisan schedule:run >> /dev/null 2>&1"
 
-- name: Update permissions on abuseio cache dir
-  file:
-    path: "{{ abuseio_basedir }}/bootstrap/cache"
-    state: directory
-    owner: abuseio
-    group: abuseio
-    mode: 0770
-    recurse: yes
-
-- name: Run composer install
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php /usr/local/bin/composer install
-  register: composer_install_result
-  changed_when: composer_install_result.stderr | search('- \w+ing ')
-
-- name: Migrating DB
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan migrate --force
-  register: migrate_result
-  changed_when: "migrate_result.stdout != 'Nothing to migrate.'"
-
-- name: List artisan commands
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan
-  register: artisan_commands
-
-- name: Clear application cache
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan cache:clear
-  when: artisan_commands.stdout.find('cache:clear') != -1
-  ignore_errors: yes
-
-- name: Optimize code
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan clear-compiled && /usr/bin/php artisan optimize
-  when: artisan_commands.stdout.find('optimize') != -1
-
-- name: Generate APP KEY
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan key:generate
-  when: artisan_commands.stdout.find('key:generate') != -1
-
-- name: Generate Installation ID
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan app:id
-  when: artisan_commands.stdout.find('app:id') != -1
-
-- name: Create log directory
-  file:
-    path: "/var/log/abuseio"
-    state: directory
-    owner: syslog
-    group: adm
-    mode: 0660
-    recurse: yes
-
-- name: Configure application sessions
+- name: Install abuseio mailpipe script
   template:
-    src: "templates/config/session.php.j2"
-    dest: "{{ abuseio_basedir }}/config/production/session.php"
-    owner: abuseio
-    group: abuseio
-    mode: 0770
+    src: abuseio-mailpipe.sh.j2
+    dest: /usr/local/bin/abuseio-mailpipe
+    owner: root
+    group: root
+    mode: 0755
 
-- name: Configure application base
-  template:
-    src: "templates/config/app.php.j2"
-    dest: "{{ abuseio_basedir }}/config/production/app.php"
-    owner: abuseio
-    group: abuseio
-    mode: 0770
+- name: List existing AbuseIO users
+  command: php artisan user:list
+  args:
+    chdir: "{{ abuseio_home }}"
+  register: abuseio_user_list
+  changed_when: false
+  become: yes
+  become_user: "{{ abuseio_user }}"
+
+- name: Create AbuseIO admin user if missing
+  command: >
+    php artisan user:create {{ abuseio_admin_username }} --password={{ abuseio_admin_password }}
+  args:
+    chdir: "{{ abuseio_home }}"
+  when: abuseio_admin_username not in abuseio_user_list.stdout
+  become: yes
+  become_user: "{{ abuseio_user }}"
+
+- name: Assign admin role to admin user if newly created
+  command: >
+    php artisan role:assign --role admin --user {{ abuseio_admin_username }}
+  args:
+    chdir: "{{ abuseio_home }}"
+  when: abuseio_admin_username not in abuseio_user_list.stdout
+  become: yes
+  become_user: "{{ abuseio_user }}"
+
+- name: Copy AbuseIO systemd unit files to /etc/systemd/system
+  copy:
+    src: "{{ abuseio_home }}/extra/etc/systemd/system/{{ item }}.service"
+    dest: "/etc/systemd/system/{{ item }}.service"
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: yes
+  loop:
+    - abuseio_queue_collector
+    - abuseio_queue_email_incoming
+    - abuseio_queue_email_outgoing
+    - abuseio_queue_delegation
+  register: abuseio_units_copied
+  changed_when: abuseio_units_copied is changed
+
+- name: Reload systemd daemon after unit changes
+  systemd:
+    daemon_reload: yes
+  when: abuseio_units_copied is changed
+
+- name: Enable and start AbuseIO queue services
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop:
+    - abuseio_queue_collector
+    - abuseio_queue_email_incoming
+    - abuseio_queue_email_outgoing
+    - abuseio_queue_delegation
 
 - name: copy abuseio logrotate files
   copy:
-    src: "{{ abuseio_basedir }}/extra/etc/logrotate.d/"
+    src: "{{ abuseio_home }}/extra/etc/logrotate.d/"
     dest: /etc/logrotate.d/
 
 - name: copy abuseio syslog files
   copy:
-    src: "{{ abuseio_basedir }}/extra/etc/rsyslog.d/"
+    src: "{{ abuseio_home }}/extra/etc/rsyslog.d/"
     dest: /etc/rsyslog.d/
 
 - name: restart syslog service 
@@ -143,52 +205,3 @@
     state: restarted
     daemon_reload: yes
     name: syslog
-
-- name: copy abuseio systemd files
-  copy:
-    src: "{{ abuseio_basedir }}/extra/etc/systemd/system/"
-    dest: /etc/systemd/system/
-
-- name: Force systemd to reread configs
-  systemd: daemon_reload=yes
-
-- name: Enable and start AbuseIO Queue abuseio_queue_email_incoming
-  systemd:
-    name: abuseio_queue_email_incoming
-    state: started
-    enabled: True
-
-- name: Enable and start AbuseIO Queue abuseio_queue_email_outgoing
-  systemd:
-    name: abuseio_queue_email_outgoing
-    state: started
-    enabled: True
-
-- name: Enable and start AbuseIO Queue abuseio_queue_collector
-  systemd:
-    name: abuseio_queue_collector
-    state: started
-    enabled: True
-
-- name: Restart queues
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php  artisan queue:restart
-
-- name: Create abuseio GUI admin user
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan user:create {{ abuseio_admin_user }} Default --password {{ abuseio_admin_password }}
-  when: artisan_commands.stdout.find('user:create') != -1
-
-- name: Assign admin role to GUI admin user
-  shell: chdir={{ abuseio_basedir }}
-    /usr/bin/php artisan role:assign --role admin --user {{ abuseio_admin_user }}
-  when: artisan_commands.stdout.find('role:assign') != -1
-
-- name: Install cron
-  cron:
-    name: "abuseio"
-    minute: "*"
-    job: "/usr/bin/php {{ abuseio_basedir }}/artisan schedule:run >> /dev/null 2>&1"
-    user: abuseio
-    cron_file: abuseio
-

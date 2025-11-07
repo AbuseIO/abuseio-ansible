@@ -1,0 +1,44 @@
+---
+- name: Include hardening tasks for accounts
+  import_tasks: accounts.yml
+
+- name: Include hardening tasks for apache
+  import_tasks: apache.yml
+
+- name: Include hardening tasks for coredumps
+  import_tasks: coredumps.yml
+
+- name: Include hardening tasks for kernel modules
+  import_tasks: kernel_modules.yml
+
+- name: Include hardening tasks for limits
+  import_tasks: limits.yml
+
+- name: Include hardening tasks for login definitions
+  import_tasks: login_defs.yml
+
+- name: Include hardening tasks for networking
+  import_tasks: networking.yml
+
+- name: Include hardening tasks for ssh
+  import_tasks: ssh.yml
+
+- name: Include hardening tasks for postfix
+  import_tasks: postfix.yml
+
+- name: Include hardening tasks for tools
+  import_tasks: tools.yml
+
+- name: Include hardening tasks for ubuntu
+  import_tasks: ubuntu.yml
+
+- name: Include hardening tasks from Lynis (safe subset)
+  import_tasks: lynis-low.yml
+  when: hardening_lynis_low_enabled | bool
+
+- name: Include hardening tasks from Lynis (medium subset)
+  import_tasks: lynis-medium.yml
+  when: hardening_lynis_medium_enabled | bool
+
+- name: Run Lynis audit and show summary
+  import_tasks: lynis-run.yml

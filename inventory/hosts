@@ -1,0 +1,6 @@
+[all]
+target ansible_host=demo2.abuse.io ansible_user=manager
+
+[abuseio]
+target
+

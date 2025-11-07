@@ -1,45 +1,46 @@
-- name: AbuseIO base installation
-  gather_facts: yes
-  hosts: localhost
+---
+- hosts: abuseio
   become: yes
-  become_method: su
   vars_files:
-    - vars/abuseio.yml
-    - vars/apache.yml
-    - vars/mysql.yml
-    - vars/php.yml
-    - vars/php-pecl.yml
-    - vars/composer.yml
-    - vars/phpmyadmin.yml
-    - vars/certbot.yml
-    - vars/pdns-recursor.yml
-    - vars/postfix.yml
-
-  pre_tasks:
-  - name: install ansible required packages, like python 
-    raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
-  - name: install ansible required packages, like python-netaddr
-    raw: python -c "import netaddr" || (apt -y update && apt install -y python-netaddr)
-  - name: install ansible required packages, like python-dnspython
-    raw: python -c "import dns.zone" || (apt -y update && apt install -y python-dnspython)
-  - name: run preflight checks
-    import_tasks: tests/preflight.yml
+    - group_vars/settings.yml
+    - group_vars/defaults.yml
 
   roles:
-    - { role: firewall,             tags: 'firewall' }
-    - { role: certbot,              tags: 'certbot' }
-    - { role: apache,               tags: 'apache' }
-    - { role: mysql,                tags: 'mysql' }
-    - { role: php,                  tags: 'php' }
-    - { role: php-mysql,            tags: 'php-mysql' }
-    - { role: composer,             tags: 'composer' }
-    - { role: php-mbstring-patch,   tags: 'php-mbstring-patch' }
-    - { role: php-pecl,             tags: 'php-pecl' }
-    - { role: php-mailparse,        tags: 'php-mailparse' }
-    - { role: phpmyadmin,           tags: 'phpmyadmin' }
-    - { role: abuseio,              tags: 'abuseio' }
-    - { role: postfix,              tags: 'postfix' }
-    - { role: git,                  tags: 'git' }
-    - { role: pdns-recursor,        tags: 'pdns-recursor' }
-    - { role: lockdown,             tags: 'lockdown' }
-
+    - role: bootstrap
+      tags:
+        - bootstrap
+    - role: ufw
+      tags:
+        - ufw
+    - role: geerlingguy.apache
+      tags:
+        - apache
+    - role: geerlingguy.php
+      tags:
+        - php
+    - role: geerlingguy.mysql
+      tags:
+        - mysql
+        - mariadb
+    - role: geerlingguy.postfix
+      tags:
+        - postfix
+        - mta
+    - role: geerlingguy.certbot
+      tags:
+        - certbot
+        - tls
+    - role: php-mailparse
+      tags:
+        - mailparse
+        - php-ext
+    - role: abuseio
+      tags:
+        - abuseio
+        - app
+    - role: post-install
+      tags:
+        - post-install
+    - role: hardening
+      tags:
+        - hardening
