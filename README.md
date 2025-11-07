@@ -17,10 +17,54 @@ cd abuseio-ansible
 ansible-galaxy install -r requirements.yml
 ```
 
-- Update `inventory/hosts` with your target host (remote)
-- Update `group_vars/settings.yml` with you base settings
+- Update `group_vars/settings.yml` with your base settings
 - [Advanced users only] Update `group_vars/defaults.yml`
-- Run: `ansible-playbook -i inventory/hosts playbook.yml`
+- Choose one of the run modes below.
+
+### Run on localhost
+
+Option A — use an inventory file:
+
+1) Create `inventory/hosts` with:
+
+```
+[abuseio]
+localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python3
+```
+
+2) Run:
+
+```
+ansible-playbook -i inventory/hosts playbook.yml
+```
+
+Option B — no inventory file (inline localhost inventory):
+
+```
+ansible-playbook -i 'localhost,' -c local playbook.yml
+```
+
+Notes for localhost:
+- OS: tested on Ubuntu 24.04 LTS; must have `apt`, `python3`, and sudo/root.
+- Certificates: Let’s Encrypt requires a public, DNS-resolvable hostname. For offline/local testing, skip certificate tasks:
+  - `ansible-playbook -i 'localhost,' -c local playbook.yml --skip-tags certbot,tls`
+- Hostname: set `abuseio_hostname` in `group_vars/settings.yml` to your domain. For local-only testing, you can use a placeholder (e.g. `demo.local`), but certificate issuance will be skipped or must be disabled as above.
+- Privileges: run as a user with sudo or root; many tasks (packages, services) require elevated privileges.
+
+### Run against a remote host
+
+1) Create `inventory/hosts` with your target host:
+
+```
+[abuseio]
+your.remote.host
+```
+
+2) Run:
+
+```
+ansible-playbook -i inventory/hosts playbook.yml
+```
 
 ## What’s included
 - Firewall (UFW): default deny incoming, allow SMTP/HTTP/HTTPS, restrict SSH to configured admin CIDR's.
