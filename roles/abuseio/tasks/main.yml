@@ -12,6 +12,11 @@
     create_home: no
     home: "{{ abuseio_home }}"
 
+- name: Check if AbuseIO home exists
+  stat:
+    path: "{{ abuseio_home }}"
+  register: abuseio_home_dir
+
 - name: Clone AbuseIO 5.0
   git:
     repo: "{{ abuseio_repo }}"
@@ -21,6 +26,13 @@
     update: yes
     force: yes
   register: abuseio_git
+  when: not (abuseio_home_dir.stat.exists | default(false))
+
+- name: Update AbuseIO repository when home exists
+  command: git -C {{ abuseio_home }} pull --ff-only
+  when: abuseio_home_dir.stat.exists | default(false)
+  become: yes
+  become_user: "{{ abuseio_user }}"
 
 - name: Fix ownership recursively when mismatched
   file:

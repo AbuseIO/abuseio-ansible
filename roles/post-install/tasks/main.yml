@@ -34,20 +34,51 @@
     --redirect -d {{ abuseio_hostname }}
   when: not cert.stat.exists
 
+- name: Check LE SSL vhost symlink presence
+  stat:
+    path: "/etc/apache2/sites-enabled/vhosts-le-ssl.conf"
+  register: le_ssl_vhost_conf
+
+- name: Set combined certificate presence fact
+  set_fact:
+    cert_present: "{{ (cert.stat.exists | default(false)) or (le_ssl_vhost_conf.stat.exists | default(false)) }}"
+
+- name: Prepare HTTP vhost with redirect after SSL is present
+  set_fact:
+    apache_vhosts:
+      - servername: "{{ abuseio_hostname }}"
+        documentroot: "{{ abuseio_home }}/public"
+        extra_parameters: |
+          <Directory "{{ abuseio_home }}/public">
+              AllowOverride All
+              Require all granted
+          </Directory>
+          Header always add Strict-Transport-Security "max-age=15552000; includeSubDomains"
+          Header always add X-Content-Type-Options "nosniff"
+          Header always add X-Frame-Options "SAMEORIGIN"
+          Header always add X-XSS-Protection "1; mode=block"
+          Redirect permanent / https://{{ abuseio_hostname }}/
+  when: cert_present or (cert is changed)
+
+- name: Re-apply Apache role to deploy HTTP redirect vhost
+  include_role:
+    name: geerlingguy.apache
+  when: cert_present or (cert is changed)
+
 - name: Switch APP_URL to https in .env
   lineinfile:
     path: "{{ abuseio_home }}/.env"
     regexp: '^APP_URL='
     line: 'APP_URL=https://{{ abuseio_hostname }}'
     backrefs: no
-  when: cert.stat.exists or (cert is changed)
+  when: cert_present or (cert is changed)
   register: appurl_update
 
 - name: Cache Laravel config after APP_URL change
   command: php artisan config:cache
   args:
     chdir: "{{ abuseio_home }}"
-  when: cert.stat.exists or (cert is changed)
+  when: cert_present or (cert is changed)
   become: yes
   become_user: "{{ abuseio_user }}"
 
@@ -55,59 +86,82 @@
   service:
     name: postfix
     state: reloaded
-  when: cert.stat.exists or (cert is changed)
+  when: cert_present or (cert is changed)
 
 - name: Restart Apache to apply TLS and APP_URL
   service:
     name: apache2
     state: restarted
-  when: cert.stat.exists or (cert is changed) or (appurl_update is defined and appurl_update is changed) or (apache_rewrite is defined and apache_rewrite is changed) or (apache_headers is defined and apache_headers is changed)
+  when: cert_present or (cert is changed) or (appurl_update is defined and appurl_update is changed) or (apache_rewrite is defined and apache_rewrite is changed) or (apache_headers is defined and apache_headers is changed)
 
-- name: Change the root user password (optional, if you prefer password auth)
-  community.mysql.mysql_user:
-    name: root
-    host: localhost
-    password: "{{ mysql_root_password }}"
-    login_unix_socket: /run/mysqld/mysqld.sock
-  when: mysql_root_password is defined and (mysql_root_password | length) > 0
+- name: Check MySQL secure installation marker
+  stat:
+    path: /etc/mysql/.secure_installation_done
+  register: mysql_secure_done
 
-- name: Remove anonymous users
-  community.mysql.mysql_user:
-    name: ""
-    host: "{{ item }}"
-    state: absent
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-    login_unix_socket: /run/mysqld/mysqld.sock
-  loop:
-    - localhost
-    - "{{ ansible_hostname }}"
-    - 127.0.0.1
-    - ::1
+- block:
+    - name: Change the root user password 
+      community.mysql.mysql_user:
+        name: root
+        host: localhost
+        password: "{{ mysql_root_password }}"
+        login_unix_socket: /run/mysqld/mysqld.sock
+      when: mysql_root_password is defined and (mysql_root_password | length) > 0
 
-- name: Disallow root login remotely (ensure root@'%' is absent)
-  community.mysql.mysql_user:
-    name: root
-    host: "%"
-    state: absent
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-    login_unix_socket: /run/mysqld/mysqld.sock
+    - name: Create MySQL client config for root automatic login
+      copy:
+        dest: /root/.my.cnf
+        owner: root
+        group: root
+        mode: '0600'
+        content: |
+          [client]
+          user=root
+          password={{ mysql_root_password }}
+          socket=/run/mysqld/mysqld.sock
+      when: mysql_root_password is defined and (mysql_root_password | length) > 0
 
-- name: Remove the test database and its privileges
-  community.mysql.mysql_db:
-    name: test
-    state: absent
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-    login_unix_socket: /run/mysqld/mysqld.sock
+    - name: Remove anonymous users
+      community.mysql.mysql_user:
+        name: ""
+        host: "{{ item }}"
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /run/mysqld/mysqld.sock
+      loop:
+        - localhost
+        - "{{ ansible_hostname }}"
+        - 127.0.0.1
+        - ::1
 
-- name: Ensure privilege tables are reloaded
-  ansible.builtin.command: mysql --socket=/run/mysqld/mysqld.sock -e "FLUSH PRIVILEGES;"
-  changed_when: true
+    - name: Disallow root login remotely (ensure root@'%' is absent)
+      community.mysql.mysql_user:
+        name: root
+        host: "%"
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /run/mysqld/mysqld.sock
 
-- name: Obtain initial cert (standalone)
-  command: >
-    certbot certonly --noninteractive --agree-tos --email admin@{{ abuseio_hostname }}
-    --standalone -d {{ abuseio_hostname }}
-  when: false  # optional; you can run manually or rely on apache plugin later
+    - name: Remove the test database and its privileges
+      community.mysql.mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Ensure privilege tables are reloaded
+      ansible.builtin.command: mysql --socket=/run/mysqld/mysqld.sock -e "FLUSH PRIVILEGES;"
+      changed_when: true
+
+    - name: Touch MySQL secure installation marker
+      file:
+        path: /etc/mysql/.secure_installation_done
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'
+  when: not (mysql_secure_done.stat.exists | default(false))
+

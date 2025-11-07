@@ -74,3 +74,25 @@ ansible-playbook -i inventory/hosts playbook.yml
 - AbuseIO 5.0, preconfigured with admin user from Ansible configuration
 - OS/Application hardening with Lunis validation
 
+# Changes
+- Instead of a postfix configuration pipe to AbuseIO, it is in Ansible for testing purposes a pipe alias via script. This is more secure as it does not require root privileges.
+- Due to automation, the apache/postfix configurations are slightly different.
+
+# TODO
+- Fix mysql root user change password, its duplicate
+
+# Security - apply or explain policy
+The following audit / scanners were used for testing a server deployed by this Ansible playback:
+
+- [Qualys SSL Labs](https://www.ssllabs.com/ssltest/), Score A+
+- [Mozilla Observatory](https://observatory.mozilla.org/), Score B
+- [ImmuniWeb](https://www.immuniweb.com/), Score A
+- [lynis](https://cisofy.com/lynis/), Score 84/100
+
+Audits report the following issues:
+
+- Apache/TLS Key exchange does not pass 'post-quantum confidentiality' on key exchange and certificate chain. At this time we believe that the Letsencrypt defaults are sufficient.
+- Apache/TLS Key exchange has TLS 1.2 enabled in a order, whereas  'post-quantum confidentiality' recommends to only use TLS 1.2 as a fallback. At this time we believe that the Letsencrypt defaults are sufficient.
+- Apache/TLS 1.2 uses TLS_CHACHA20_POLY1305_SHA256 incorrectly. We use Letsencrypt defaults, which provides a strong an balanced key set. Therefor we believe this risk is negligible.
+- TLS certificate lacks OCSP revocation information. We use a free Letsencrypt certificate, which does not provide OCSP revocation information. Letsencrypt has a CRL which provides the same features for revocation as OCSP. There is no risk on a security, and we believe this check is outdated.
+- Apache/Headers are missing CSP-policy. Due to inline script loading, it would be the most unrestrictive policy, thus it makes no sense to explicitly list allow any, which is default. However, we believe that the risk is negligible.
