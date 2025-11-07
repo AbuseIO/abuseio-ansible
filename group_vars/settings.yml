@@ -16,7 +16,7 @@ mysql_root_password: "CHANGE_ME_SECURE"
 # AbuseIO admin
 abuseio_admin_username: "admin@isp.local"
 abuseio_admin_contact:  "admin@isp.local"
-abuseio_admin_password: "CHANGE_ME_ADMIN_PASSWORD"
+abuseio_admin_password: "ispadmin"
 
 ## Lynis subsets toggles (enabled by default)
 hardening_lynis_low_enabled: true
