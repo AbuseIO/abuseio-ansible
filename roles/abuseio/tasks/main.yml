@@ -12,33 +12,6 @@
     create_home: no
     home: "{{ abuseio_home }}"
 
-- name: Create app directory
-  file:
-    path: "{{ abuseio_home }}"
-    state: directory
-    owner: "{{ abuseio_user }}"
-    group: "{{ abuseio_group }}"
-    mode: 0750
-
-- name: Fix ownership recursively when mismatched
-  file:
-    path: "{{ abuseio_home }}"
-    state: directory
-    owner: "{{ abuseio_user }}"
-    group: "{{ abuseio_group }}"
-    recurse: yes
-  # enforce ownership unconditionally to avoid safe.directory mismatches
-
-- name: Add git safe.directory (system-wide)
-  command: git config --system --add safe.directory {{ abuseio_home }}
-  become: yes
-  become_user: root
-
-- name: Add git safe.directory exception for app user
-  command: git config --global --add safe.directory {{ abuseio_home }}
-  become: yes
-  become_user: "{{ abuseio_user }}"
-
 - name: Clone AbuseIO 5.0
   git:
     repo: "{{ abuseio_repo }}"
@@ -48,8 +21,15 @@
     update: yes
     force: yes
   register: abuseio_git
-  become: yes
-  become_user: "{{ abuseio_user }}"
+
+- name: Fix ownership recursively when mismatched
+  file:
+    path: "{{ abuseio_home }}"
+    state: directory
+    owner: "{{ abuseio_user }}"
+    group: "{{ abuseio_group }}"
+    recurse: yes
+  # enforce ownership unconditionally to avoid safe.directory mismatches
 
 - name: Ensure www-data and postfix are in abuseio group
   user:
@@ -178,6 +158,17 @@
   systemd:
     daemon_reload: yes
   when: abuseio_units_copied is changed
+
+- name: Enable and start AbuseIO queue services
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: stopped
+  loop:
+    - abuseio_queue_collector
+    - abuseio_queue_email_incoming
+    - abuseio_queue_email_outgoing
+    - abuseio_queue_delegation
 
 - name: Enable and start AbuseIO queue services
   systemd:
