@@ -37,3 +37,29 @@
       - unzip
       - acl
     state: present
+
+- name: Derive short hostname from FQDN
+  set_fact:
+    abuseio_short_hostname: "{{ (abuseio_hostname.split('.') | first) if ('.' in abuseio_hostname) else abuseio_hostname }}"
+
+- name: Configure /etc/hostname with FQDN
+  copy:
+    dest: /etc/hostname
+    content: "{{ abuseio_hostname }}\n"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Apply hostname via hostnamectl
+  command: hostnamectl set-hostname {{ abuseio_hostname }}
+  register: hostnamectl_set
+  changed_when: "(hostnamectl_set.rc | default(1)) == 0"
+  failed_when: false
+
+- name: Ensure 127.0.1.1 maps to short and FQDN in /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^\s*127\.0\.1\.1\s+'
+    line: '127.0.1.1 {{ abuseio_short_hostname }} {{ abuseio_hostname }}'
+    create: yes
+    backup: yes
