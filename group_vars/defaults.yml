@@ -67,11 +67,6 @@ postfix_smtpd_tls_cert_file: "/etc/letsencrypt/live/{{ abuseio_hostname }}/fullc
 postfix_smtpd_tls_key_file: "/etc/letsencrypt/live/{{ abuseio_hostname }}/privkey.pem"
 postfix_smtpd_tls_security_level: "may"
 postfix_smtp_tls_security_level: "may"
-postfix_aliases:
-  - name: root
-    value: "admin@{{ abuseio_hostname }}"
-  - name: abuse
-    value: "|/usr/local/bin/abuseio-mailpipe"
 
 # Certbot
 certbot_auto_renew: true

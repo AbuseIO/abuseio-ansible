@@ -115,14 +115,6 @@
     minute: "*"
     job: "php {{ abuseio_home }}/artisan schedule:run >> /dev/null 2>&1"
 
-- name: Install abuseio mailpipe script
-  template:
-    src: abuseio-mailpipe.sh.j2
-    dest: /usr/local/bin/abuseio-mailpipe
-    owner: root
-    group: root
-    mode: 0755
-
 - name: List existing AbuseIO users
   command: php artisan user:list
   args:

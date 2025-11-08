@@ -75,7 +75,6 @@ ansible-playbook -i inventory/hosts playbook.yml
 - OS/Application hardening with Lunis validation
 
 # Changes
-- Instead of a postfix configuration pipe to AbuseIO, it is in Ansible for testing purposes a pipe alias via script. This is more secure as it does not require root privileges.
 - Due to automation, the apache/postfix configurations are slightly different.
 
 # TODO

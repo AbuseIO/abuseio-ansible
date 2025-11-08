@@ -221,3 +221,40 @@
         mode: '0644'
   when: not (mysql_secure_done.stat.exists | default(false))
 
+- name: Configure Postfix AbuseIO notifier transport in master.cf
+  block:
+    - name: Ensure AbuseIO notifier transport exists in master.cf
+      lineinfile:
+        path: /etc/postfix/master.cf
+        insertafter: '^\s*pickup\s'
+        line: "notifier   unix  -       n       n       -       -       pipe flags=Rq user={{ abuseio_user }}:{{ abuseio_group }} argv=/usr/bin/php -q {{ abuseio_home }}/artisan --env=production  {{ abuseio_mailpipe_command }}"
+        create: yes
+        backup: yes
+
+    - name: Ensure transport_maps is set in main.cf
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^\s*transport_maps\s*=.*$'
+        line: 'transport_maps = hash:/etc/postfix/transport'
+        create: yes
+        backup: yes
+
+    - name: Configure transport map for notifier address
+      copy:
+        dest: /etc/postfix/transport
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          notifier@{{ abuseio_hostname }}    notifier:
+
+    - name: Build transport db
+      command: postmap /etc/postfix/transport
+      changed_when: true
+
+    - name: Reload Postfix to apply transport changes
+      service:
+        name: postfix
+        state: reloaded
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
