@@ -25,6 +25,7 @@ abuseio_group: "abuseio"
 abuseio_home: "/opt/abuseio"
 abuseio_repo: "https://github.com/AbuseIO/abuseio.git"
 abuseio_mailpipe_command: "abuseio:receive"
+abuseio_notifier_samples_script: "{{ abuseio_home }}/extra/notifier-samples/runall"
 
 # Apache
 apache_remove_default_vhost: true

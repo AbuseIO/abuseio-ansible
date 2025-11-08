@@ -1,0 +1,18 @@
+---
+# AbuseIO demo data role
+
+- name: Run Laravel db:seed to load demo data
+  command: php artisan db:seed --force
+  args:
+    chdir: "{{ abuseio_home }}"
+  when: abuseio_load_demo_data | default(false)
+  become: yes
+  become_user: "{{ abuseio_user }}"
+
+- name: Run notifier samples script to load example notifiers
+  command: bash {{ abuseio_notifier_samples_script }}
+  args:
+    chdir: "{{ abuseio_home }}"
+  when: abuseio_load_notifier_samples | default(false)
+  become: yes
+  become_user: "{{ abuseio_user }}"

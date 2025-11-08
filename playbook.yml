@@ -38,6 +38,10 @@
       tags:
         - abuseio
         - app
+    - role: abuseio-demodata
+      tags:
+        - abuseio-demodata
+        - demo
     - role: post-install
       tags:
         - post-install

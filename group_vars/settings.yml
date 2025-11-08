@@ -22,3 +22,7 @@ abuseio_admin_password: "ispadmin"
 hardening_lynis_low_enabled: true
 hardening_lynis_medium_enabled: true
 hardening_lynis_suggestions_enabled: true
+
+# Demo data toggles
+abuseio_load_demo_data: false
+abuseio_load_notifier_samples: false

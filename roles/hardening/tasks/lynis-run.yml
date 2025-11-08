@@ -18,15 +18,3 @@
   until: lynis_result.finished
   retries: 360
   delay: 5
-
-- name: Build consolidated Lynis output text
-  set_fact:
-    lynis_text: "{{ (lynis_result.result.stdout | default('')) ~ '\n' ~ (lynis_result.result.stderr | default('')) }}"
-
-- name: Extract Lynis summary lines
-  set_fact:
-    lynis_summary: "{{ lynis_text | regex_findall('(?m)^(?:Lynis security scan details:|Hardening index\\s*:.*|Tests performed\\s*:.*|Plugins enabled\\s*:.*)$') | join('\n') }}"
-
-- name: Display Lynis summary
-  debug:
-    msg: "{{ lynis_summary | default('Lynis summary not found in output.') }}"
