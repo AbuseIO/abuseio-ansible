@@ -82,11 +82,67 @@
   become: yes
   become_user: "{{ abuseio_user }}"
 
+- name: Ensure Postfix uses Let's Encrypt TLS certificate and key
+  block:
+    - name: Set smtpd_tls_cert_file to LE fullchain
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^\s*smtpd_tls_cert_file\s*=.*$'
+        line: 'smtpd_tls_cert_file = /etc/letsencrypt/live/{{ abuseio_hostname }}/fullchain.pem'
+        create: yes
+        backup: yes
+
+    - name: Set smtpd_tls_key_file to LE privkey
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^\s*smtpd_tls_key_file\s*=.*$'
+        line: 'smtpd_tls_key_file = /etc/letsencrypt/live/{{ abuseio_hostname }}/privkey.pem'
+        create: yes
+        backup: yes
+
+    - name: Ensure smtpd_tls_security_level is at least 'may'
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^\s*smtpd_tls_security_level\s*=.*$'
+        line: 'smtpd_tls_security_level = may'
+        create: yes
+        backup: yes
+
+    - name: Ensure smtp_tls_security_level is at least 'may'
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^\s*smtp_tls_security_level\s*=.*$'
+        line: 'smtp_tls_security_level = may'
+        create: yes
+        backup: yes
+  when: cert_present or (cert is changed)
+
 - name: Reload Postfix to pick up TLS certificates
   service:
     name: postfix
     state: reloaded
   when: cert_present or (cert is changed)
+
+- name: Ensure Certbot deploy hooks directory exists
+  file:
+    path: /etc/letsencrypt/renewal-hooks/deploy
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install Certbot Postfix reload deploy hook
+  copy:
+    dest: /etc/letsencrypt/renewal-hooks/deploy/reload-postfix.sh
+    owner: root
+    group: root
+    mode: '0755'
+    content: |
+      #!/bin/sh
+      #
+      # Reload Postfix configuration after a successful Certbot certificate renewal.
+      #
+      systemctl reload postfix
 
 - name: Restart Apache to apply TLS and APP_URL
   service:
