@@ -1,7 +1,7 @@
 # AbuseIO 5.0 Ansible Installer
 
 ## Overview
-Automates installation on Ubuntu 24.04 LTS following AbuseIO docs.
+Automates installation on Ubuntu 24.04 LTS following AbuseIO docs. You are still required to do the pre-installation steps as outlined in the documentation: https://docs.abuse.io/en/5.0/installation/
 
 This should work :) However this is a complete revamp from the old (broken) version, reusing existing roles where possible and keeping security in mind. 
 If there are issues, please provide full ansible output and report it.
